@@ -9,9 +9,14 @@
 
 ## 当前正式版本
 
+- [科普麦子工作台项目全景说明（2026-10-06 v02）](./maizi-workhub-project-summary-20261006-v02.html)
+- [麦子工作台 PostgreSQL 数据库结构、ER 图与表关系（2026-10-06 v02）](./maizi-postgresql-database-structure-20261006-v02.html)
+- [AI 健康项目架构图](./ai-health-mermaid-strucutre.html)
+
+## 历史正式版本
+
 - [科普麦子工作台项目全景说明（2026-10-06 v01）](./maizi-workhub-project-summary-20261006-v01.html)
 - [麦子工作台 PostgreSQL 数据库结构与表关系（2026-10-06 v01）](./maizi-postgresql-database-structure-20261006-v01.html)
-- [AI 健康项目架构图](./ai-health-mermaid-strucutre.html)
 
 ## 历史兼容文件
 
