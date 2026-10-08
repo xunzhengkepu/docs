@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>科普麦子｜单条视频状态机设计与代码</title>
+  <style>
+    :root {
+      --ink: #17213a;
+      --muted: #61708e;
+      --line: #dfe6f2;
+      --paper: #ffffff;
+      --canvas: #f4f7fb;
+      --blue: #2864dc;
+      --blue-soft: #eaf1ff;
+      --orange: #c96f22;
+      --orange-soft: #fff2e5;
+      --green: #138a68;
+      --green-soft: #e7f7f1;
+      --purple: #7556c8;
+      --purple-soft: #f0ebff;
+      --red: #bd3d4c;
+      --red-soft: #fff0f2;
+      --shadow: 0 18px 55px rgba(34, 54, 92, .09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      line-height: 1.72;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 30px 24px;
+      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(14px);
+      overflow-y: auto;
+    }
+    .brand { font-weight: 800; letter-spacing: .02em; font-size: 18px; }
+    .brand small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 500; }
+    nav { margin-top: 28px; }
+    nav a { display: block; padding: 8px 10px; margin: 3px 0; border-radius: 8px; color: #44516c; font-size: 13px; }
+    nav a:hover { background: var(--blue-soft); color: var(--blue); text-decoration: none; }
+    main { width: min(1160px, calc(100vw - 250px)); padding: 48px 54px 90px; }
+    .hero {
+      padding: 42px;
+      color: white;
+      border-radius: 22px;
+      background: linear-gradient(125deg, #17376f 0%, #2864dc 56%, #6e56c8 100%);
+      box-shadow: var(--shadow);
+    }
+    .hero h1 { margin: 10px 0 14px; max-width: 820px; font-size: clamp(30px, 4vw, 48px); line-height: 1.18; letter-spacing: -.03em; }
+    .hero p { max-width: 820px; margin: 0; color: rgba(255,255,255,.87); font-size: 16px; }
+    .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; opacity: .8; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .badge { padding: 7px 11px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; background: rgba(255,255,255,.10); font-size: 12px; }
+    section { margin-top: 54px; scroll-margin-top: 24px; }
+    h2 { margin: 0 0 18px; font-size: 28px; line-height: 1.3; letter-spacing: -.02em; }
+    h3 { margin: 28px 0 12px; font-size: 20px; }
+    h4 { margin: 20px 0 8px; font-size: 16px; }
+    .lead { color: var(--muted); max-width: 900px; }
+    .callout { padding: 20px 22px; border-left: 4px solid var(--blue); border-radius: 10px; background: var(--blue-soft); }
+    .grid { display: grid; gap: 16px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card { padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 0 8px 30px rgba(43, 61, 96, .045); }
+    .card h3, .card h4 { margin-top: 0; }
+    .layer-no { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-bottom: 12px; border-radius: 9px; color: white; background: var(--blue); font-weight: 800; }
+    .human .layer-no { background: var(--orange); }
+    .event .layer-no { background: var(--green); }
+    .state .layer-no { background: var(--blue); }
+    .analysis .layer-no { background: var(--purple); }
+    .label { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 750; }
+    .label.human { color: #8b4a14; background: var(--orange-soft); }
+    .label.event { color: #08684d; background: var(--green-soft); }
+    .label.state { color: #174aa9; background: var(--blue-soft); }
+    .label.analysis { color: #5a3ca8; background: var(--purple-soft); }
+    .flow { display: flex; align-items: stretch; gap: 8px; margin: 22px 0; overflow-x: auto; padding-bottom: 5px; }
+    .flow .step { min-width: 155px; flex: 1; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); text-align: center; font-size: 13px; }
+    .flow .arrow { align-self: center; color: #97a4ba; font-weight: 800; }
+    .state-track { display: grid; gap: 9px; margin: 18px 0; }
+    .state-row { display: grid; grid-template-columns: 36px minmax(180px, 280px) 1fr; gap: 12px; align-items: center; padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+    .state-row .index { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: white; background: var(--blue); font-size: 12px; font-weight: 800; }
+    .state-row code { color: #174aa9; }
+    table { width: 100%; border-collapse: collapse; margin: 18px 0 28px; background: var(--paper); font-size: 13px; }
+    th, td { padding: 12px 13px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: #35415b; background: #f0f4fa; font-weight: 750; }
+    tr:hover td { background: #fafcff; }
+    code { font-family: "Cascadia Code", Consolas, monospace; font-size: .93em; }
+    pre { margin: 14px 0 22px; padding: 18px 20px; border-radius: 14px; color: #dfe9ff; background: #17213a; overflow-x: auto; line-height: 1.62; box-shadow: inset 0 1px rgba(255,255,255,.05); }
+    pre code { color: inherit; }
+    .comment { color: #8fa3cb; }
+    .keyword { color: #9cc4ff; }
+    .string { color: #a9e6c9; }
+    .warn { padding: 17px 20px; border: 1px solid #f0c5ca; border-radius: 12px; color: #7f2631; background: var(--red-soft); }
+    .ok { padding: 17px 20px; border: 1px solid #bce4d7; border-radius: 12px; color: #075f47; background: var(--green-soft); }
+    details { margin: 12px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+    summary { cursor: pointer; padding: 15px 18px; font-weight: 750; }
+    details > div { padding: 0 18px 18px; }
+    .footer { margin-top: 60px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    @media (max-width: 900px) {
+      .layout { display: block; }
+      aside { position: relative; width: 100%; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      nav { display: flex; flex-wrap: wrap; gap: 4px; }
+      nav a { margin: 0; }
+      main { width: 100%; padding: 26px 18px 64px; }
+      .hero { padding: 28px 22px; }
+      .grid.two, .grid.four { grid-template-columns: 1fr; }
+      .state-row { grid-template-columns: 34px 1fr; }
+      .state-row span:last-child { grid-column: 2; }
+      table { display: block; overflow-x: auto; }
+    }
+    @media print {
+      aside { display: none; }
+      main { width: 100%; padding: 0; }
+      .hero { box-shadow: none; }
+      .card, table, pre { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">科普麦子<small>单条视频状态机 · 设计与代码</small></div>
+    <nav>
+      <a href="#principle">设计原则</a>
+      <a href="#layers">四层模型</a>
+      <a href="#actions">人的动作</a>
+      <a href="#events">业务事件</a>
+      <a href="#states">业务状态</a>
+      <a href="#transitions">转换规则</a>
+      <a href="#analysis">分析与人工校对</a>
+      <a href="#storage">正式存储</a>
+      <a href="#code">代码骨架</a>
+      <a href="#current">当前代码差距</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">Version 2026-10-09</div>
+      <h1>单条视频状态机设计与代码</h1>
+      <p>把人的动作、业务事件、Request 当前状态、规则与大模型分析结果彻底分开。目标不是让 AI 每次都猜对，而是让不确定判断永远不会悄悄推进正式状态。</p>
+      <div class="badges">
+        <span class="badge">聊天上下文驱动</span>
+        <span class="badge">事件溯源</span>
+        <span class="badge">版本级审批</span>
+        <span class="badge">人工兜底</span>
+        <span class="badge">可回放与审计</span>
+      </div>
+    </header>
+
+    <section id="principle">
+      <h2>设计原则</h2>
+      <div class="callout"><strong>正式状态只由已验证的业务事件推导。</strong>人的动作、大模型建议、提醒和人工校对任务都不能直接覆盖 <code>requests.status</code>。</div>
+      <div class="flow" aria-label="状态处理链路">
+        <div class="step"><span class="label human">人的动作</span><br>发送文案、原片或成片</div><div class="arrow">→</div>
+        <div class="step">微信消息<br>作为原始证据</div><div class="arrow">→</div>
+        <div class="step"><span class="label analysis">分析建议</span><br>事件与对象候选</div><div class="arrow">→</div>
+        <div class="step">规则校验<br>角色、版本、前置状态</div><div class="arrow">→</div>
+        <div class="step"><span class="label event">业务事件</span><br>只追加事实</div><div class="arrow">→</div>
+        <div class="step"><span class="label state">业务状态</span><br>重新计算</div>
+      </div>
+      <div class="grid two">
+        <div class="card"><h3>可以自动确认</h3><p>发送人身份明确、Request 唯一、目标版本唯一、消息语义明确、前置状态合法，并且没有相互冲突的证据。</p></div>
+        <div class="card"><h3>必须人工校对</h3><p>同群并行多个 Request、短回复没有引用、批量范围不清、同一句包含确认和修改、身份未知或版本无法唯一定位。</p></div>
+      </div>
+    </section>
+
+    <section id="layers">
+      <h2>四层模型</h2>
+      <div class="grid four">
+        <div class="card human"><span class="layer-no">1</span><h3>人的动作</h3><p>谁正在做什么。用于任务协作，不直接改变 Request 状态。</p><span class="label human">Human Action</span></div>
+        <div class="card event"><span class="layer-no">2</span><h3>业务事件</h3><p>已经发生且有证据的事实。只追加，不覆盖历史。</p><span class="label event">Domain Event</span></div>
+        <div class="card state"><span class="layer-no">3</span><h3>业务状态</h3><p>当前等待哪个结果。由全部正式事件重新计算。</p><span class="label state">Request State</span></div>
+        <div class="card analysis"><span class="layer-no">4</span><h3>分析与校对</h3><p>规则或大模型的候选判断，以及人工接受、纠正或拒绝。</p><span class="label analysis">Analysis & Review</span></div>
+      </div>
+      <div class="warn"><strong>不能进入业务事件表：</strong><code>unknown_video</code>、<code>no_state_change</code>、<code>manual_review</code>、<code>likely_approved</code>。它们只是分析结果。</div>
+    </section>
+
+    <section id="actions">
+      <h2>第一层：人的动作</h2>
+      <p class="lead">动作采用动词命名，可记录在员工任务表中。任务自身可有 <code>todo / in_progress / blocked / done / cancelled</code>，但这不是 Request 状态。</p>
+      <table>
+        <thead><tr><th>角色</th><th>动作代码</th><th>中文含义</th><th>完成后可能产生的事件</th></tr></thead>
+        <tbody>
+          <tr><td>文案</td><td><code>claim_request</code><br><code>draft_script</code><br><code>revise_script</code><br><code>submit_script</code></td><td>领取任务、写初稿、修改、发送版本</td><td><code>request_assigned</code><br><code>script_version_submitted</code></td></tr>
+          <tr><td>医生</td><td><code>review_script</code><br><code>record_video</code><br><code>submit_raw_video</code><br><code>review_cut</code></td><td>审稿、录制、发送原片、审核成片</td><td>文案审批事件、<code>raw_video_submitted</code>、成片审批事件</td></tr>
+          <tr><td>企业</td><td><code>submit_requirement</code><br><code>review_script</code><br><code>review_cut</code></td><td>提出患教需求、审核文案与成片</td><td>需求更新、版本审批或修改事件</td></tr>
+          <tr><td>剪辑</td><td><code>inspect_raw_video</code><br><code>request_retake</code><br><code>edit_video</code><br><code>submit_cut</code><br><code>revise_cut</code><br><code>handoff_final_cut</code></td><td>检查原片、补录请求、剪辑、提交和移交终版</td><td>原片质检、成片版本和终版移交事件</td></tr>
+          <tr><td>运营</td><td><code>set_publish_window</code><br><code>schedule_publication</code><br><code>publish_video</code><br><code>record_publication_link</code><br><code>record_performance</code></td><td>设档期、定时、发布、登记链接和表现</td><td>排期、发布、链接和效果事件</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="events">
+      <h2>第二层：业务事件</h2>
+      <p class="lead">事件采用过去式含义，必须带 <code>request_id</code>、操作者、时间和证据。涉及文案或成片时还必须带具体版本 ID。</p>
+      <div class="grid two">
+        <div class="card"><h3>Request</h3><pre><code>request_created
+request_assigned
+request_requirement_updated
+publish_window_set
+request_cancelled
+request_reopened
+request_completed</code></pre></div>
+        <div class="card"><h3>文案版本</h3><pre><code>script_version_created
+script_version_submitted
+script_review_approved
+script_changes_requested
+script_version_withdrawn</code></pre></div>
+        <div class="card"><h3>原片与成片</h3><pre><code>raw_video_submitted
+raw_video_bound_to_request
+raw_qc_approved
+raw_retake_requested
+raw_video_replaced
+
+cut_version_created
+cut_version_submitted
+cut_review_approved
+cut_changes_requested
+cut_version_withdrawn
+final_cut_handed_off</code></pre></div>
+        <div class="card"><h3>发布与效果</h3><pre><code>publication_scheduled
+publication_rescheduled
+publication_cancelled
+video_published
+publication_link_recorded
+performance_recorded</code></pre></div>
+      </div>
+      <h3>审批事件的最小数据</h3>
+      <pre><code>{
+  <span class="string">"requestId"</span>: <span class="string">"req_123"</span>,
+  <span class="string">"artifactType"</span>: <span class="string">"cut"</span>,
+  <span class="string">"artifactVersionId"</span>: <span class="string">"cut_v3"</span>,
+  <span class="string">"reviewerId"</span>: <span class="string">"person_88"</span>,
+  <span class="string">"reviewerRole"</span>: <span class="string">"doctor"</span>,
+  <span class="string">"decision"</span>: <span class="string">"approved"</span>,
+  <span class="string">"evidenceMessageUid"</span>: <span class="string">"wechat_msg_sha256"</span>
+}</code></pre>
+    </section>
+
+    <section id="states">
+      <h2>第三层：Request 业务状态</h2>
+      <p class="lead">状态描述“现在等待什么”，避免使用“正在剪辑”等人的动作表达。</p>
+      <div class="state-track">
+        <div class="state-row"><span class="index">1</span><code>awaiting_script_submission</code><span>待文案提交当前版本</span></div>
+        <div class="state-row"><span class="index">2</span><code>awaiting_doctor_script_review</code><span>文案待医生审核</span></div>
+        <div class="state-row"><span class="index">3</span><code>awaiting_company_script_review</code><span>患教文案待企业审核</span></div>
+        <div class="state-row"><span class="index">4</span><code>awaiting_raw_video</code><span>文案已通过，待医生发送原片</span></div>
+        <div class="state-row"><span class="index">5</span><code>awaiting_raw_qc</code><span>原片已收到，待剪辑检查</span></div>
+        <div class="state-row"><span class="index">6</span><code>awaiting_raw_replacement</code><span>原片不可用，待补录或重传</span></div>
+        <div class="state-row"><span class="index">7</span><code>awaiting_cut_submission</code><span>原片可用，待剪辑提交成片</span></div>
+        <div class="state-row"><span class="index">8</span><code>awaiting_company_cut_review</code><span>患教成片待企业审核</span></div>
+        <div class="state-row"><span class="index">9</span><code>awaiting_doctor_cut_review</code><span>成片待医生审核</span></div>
+        <div class="state-row"><span class="index">10</span><code>awaiting_cut_revision</code><span>当前成片需要修改</span></div>
+        <div class="state-row"><span class="index">11</span><code>ready_to_publish</code><span>当前终版已完成全部必要审核</span></div>
+        <div class="state-row"><span class="index">12</span><code>scheduled_for_publish</code><span>已设置发布时间，尚未确认发布成功</span></div>
+        <div class="state-row"><span class="index">13</span><code>published</code><span>已确认发布成功</span></div>
+        <div class="state-row"><span class="index">14</span><code>observation_due</code><span>已发布，等待登记后续表现</span></div>
+        <div class="state-row"><span class="index">15</span><code>completed / cancelled</code><span>正常完成或人工取消</span></div>
+      </div>
+    </section>
+
+    <section id="transitions">
+      <h2>科普与患教转换规则</h2>
+      <h3>科普主线</h3>
+      <div class="flow">
+        <div class="step">待文案提交</div><div class="arrow">→</div><div class="step">待医生审稿</div><div class="arrow">→</div><div class="step">待原片</div><div class="arrow">→</div><div class="step">待原片质检</div><div class="arrow">→</div><div class="step">待成片</div><div class="arrow">→</div><div class="step">待医生审片</div><div class="arrow">→</div><div class="step">待发布</div>
+      </div>
+      <h3>患教主线</h3>
+      <div class="flow">
+        <div class="step">待文案提交</div><div class="arrow">→</div><div class="step">待医生审稿</div><div class="arrow">→</div><div class="step">待企业审稿</div><div class="arrow">→</div><div class="step">待原片</div><div class="arrow">→</div><div class="step">待成片</div><div class="arrow">→</div><div class="step">待企业审片</div><div class="arrow">→</div><div class="step">待医生审片</div><div class="arrow">→</div><div class="step">待发布</div>
+      </div>
+      <table>
+        <thead><tr><th>当前状态</th><th>正式事件</th><th>额外条件</th><th>下一状态</th></tr></thead>
+        <tbody>
+          <tr><td><code>awaiting_script_submission</code></td><td><code>script_version_submitted</code></td><td>版本绑定唯一 Request</td><td><code>awaiting_doctor_script_review</code></td></tr>
+          <tr><td><code>awaiting_doctor_script_review</code></td><td><code>script_review_approved</code></td><td>科普：医生审批当前版本</td><td><code>awaiting_raw_video</code></td></tr>
+          <tr><td><code>awaiting_doctor_script_review</code></td><td><code>script_review_approved</code></td><td>患教：医生审批当前版本</td><td><code>awaiting_company_script_review</code></td></tr>
+          <tr><td><code>awaiting_company_script_review</code></td><td><code>script_review_approved</code></td><td>企业审批同一版本</td><td><code>awaiting_raw_video</code></td></tr>
+          <tr><td><code>awaiting_raw_video</code></td><td><code>raw_video_submitted</code></td><td>医生身份与 Request 唯一</td><td><code>awaiting_raw_qc</code></td></tr>
+          <tr><td><code>awaiting_raw_qc</code></td><td><code>raw_qc_approved</code></td><td>剪辑明确确认原片可用</td><td><code>awaiting_cut_submission</code></td></tr>
+          <tr><td><code>awaiting_raw_qc</code></td><td><code>raw_retake_requested</code></td><td>明确补录、重录或重传</td><td><code>awaiting_raw_replacement</code></td></tr>
+          <tr><td><code>awaiting_cut_submission</code></td><td><code>cut_version_submitted</code></td><td>科普</td><td><code>awaiting_doctor_cut_review</code></td></tr>
+          <tr><td><code>awaiting_cut_submission</code></td><td><code>cut_version_submitted</code></td><td>患教</td><td><code>awaiting_company_cut_review</code></td></tr>
+          <tr><td><code>awaiting_company_cut_review</code></td><td><code>cut_review_approved</code></td><td>企业审批当前成片</td><td><code>awaiting_doctor_cut_review</code></td></tr>
+          <tr><td><code>awaiting_doctor_cut_review</code></td><td><code>cut_review_approved</code></td><td>当前版本所需审批全部完成</td><td><code>ready_to_publish</code></td></tr>
+          <tr><td>任一文案审核状态</td><td><code>script_changes_requested</code></td><td>产生新版本后旧审批失效</td><td><code>awaiting_script_submission</code></td></tr>
+          <tr><td>任一成片审核状态</td><td><code>cut_changes_requested</code></td><td>产生新版本后旧审批失效</td><td><code>awaiting_cut_revision</code></td></tr>
+          <tr><td><code>ready_to_publish</code></td><td><code>publication_scheduled</code></td><td>有明确发布时间</td><td><code>scheduled_for_publish</code></td></tr>
+          <tr><td><code>ready_to_publish</code> 或 <code>scheduled_for_publish</code></td><td><code>video_published</code></td><td>明确发布成功或平台链接</td><td><code>published</code></td></tr>
+        </tbody>
+      </table>
+      <div class="ok"><strong>提醒不改变状态：</strong>没有回复、超时、可能已经剪完、应该发布了，只能创建提醒或待办。</div>
+    </section>
+
+    <section id="analysis">
+      <h2>第四层：分析建议与人工校对</h2>
+      <div class="grid two">
+        <div class="card"><h3>分析建议</h3><pre><code>sender_role_suggestion
+event_suggestion
+request_binding_suggestion
+version_binding_suggestion
+raw_cut_association_suggestion</code></pre><p>保存候选、置信度、理由、规则版本、模型和提示词版本。</p></div>
+        <div class="card"><h3>人工校对任务</h3><pre><code>identify_sender_role
+select_request
+select_artifact_version
+classify_message
+confirm_batch_scope
+resolve_conflicting_reviews</code></pre><p>人工决定为接受、纠正、拒绝或创建缺失 Request。</p></div>
+      </div>
+      <h3>允许自动写入业务事件的条件</h3>
+      <ol>
+        <li>消息未被处理过，保证幂等；</li>
+        <li>发送人身份和角色确定；</li>
+        <li>Request 和版本唯一；</li>
+        <li>消息语义明确，不是疑问句或混合意见；</li>
+        <li>状态转换合法，所需前置事件齐全；</li>
+        <li>没有冲突审批或更新版本；</li>
+        <li>规则允许该类事件自动确认。</li>
+      </ol>
+    </section>
+
+    <section id="storage">
+      <h2>正式存储结构</h2>
+      <table>
+        <thead><tr><th>表</th><th>职责</th><th>关键字段</th></tr></thead>
+        <tbody>
+          <tr><td><code>requests</code></td><td>单条视频工作主记录与状态缓存</td><td>doctor_id、work_type、title、status、current_script_version_id、current_cut_version_id</td></tr>
+          <tr><td><code>work_tasks</code></td><td>人员动作、负责人和任务进度</td><td>request_id、action_type、assignee_id、status、due_at</td></tr>
+          <tr><td><code>script_versions</code></td><td>不可覆盖的文案版本链</td><td>request_id、version_number、parent_version_id、content/file_ref</td></tr>
+          <tr><td><code>video_versions</code></td><td>原片、成片和返工版</td><td>request_id、kind、version_number、parent_video_id、message_uid</td></tr>
+          <tr><td><code>approvals</code></td><td>具体版本的医生或企业审核</td><td>artifact_type、artifact_version_id、reviewer_role、decision、evidence_message_uid</td></tr>
+          <tr><td><code>workflow_events</code></td><td>只追加的正式业务事件</td><td>request_id、event_type、artifact_version_id、actor_id、evidence_message_uid</td></tr>
+          <tr><td><code>analysis_suggestions</code></td><td>规则或大模型的候选结果</td><td>message_uid、suggested_event、candidate_request_id、confidence、reason</td></tr>
+          <tr><td><code>review_tasks</code></td><td>待人工解决的歧义</td><td>suggestion_id、review_type、status、assigned_to</td></tr>
+          <tr><td><code>human_decisions</code></td><td>人工接受、纠正或拒绝</td><td>review_task_id、decision、correct_event_type、correct_request_id、reviewer_id</td></tr>
+          <tr><td><code>message_evidence</code></td><td>业务事件与微信消息的多对多证据关系</td><td>workflow_event_id、message_uid、evidence_role</td></tr>
+        </tbody>
+      </table>
+      <pre><code><span class="comment">-- 核心约束示例；PostgreSQL 与 SQLite 需分别调整主键和时间类型</span>
+CREATE TABLE workflow_events (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES requests(id),
+  event_type TEXT NOT NULL,
+  artifact_version_id TEXT,
+  actor_id TEXT,
+  actor_role TEXT,
+  evidence_message_uid TEXT,
+  payload_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  UNIQUE(request_id, event_type, evidence_message_uid)
+);
+
+CREATE TABLE approvals (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES requests(id),
+  artifact_type TEXT NOT NULL CHECK (artifact_type IN ('script','cut')),
+  artifact_version_id TEXT NOT NULL,
+  reviewer_id TEXT NOT NULL,
+  reviewer_role TEXT NOT NULL CHECK (reviewer_role IN ('doctor','company')),
+  decision TEXT NOT NULL CHECK (decision IN ('approved','changes_requested')),
+  evidence_message_uid TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(artifact_version_id, reviewer_role, evidence_message_uid)
+);</code></pre>
+    </section>
+
+    <section id="code">
+      <h2>可落地的代码骨架</h2>
+      <details open><summary>1. 分离状态、业务事件和分析结果</summary><div><pre><code><span class="keyword">export const</span> REQUEST_STATUS = Object.freeze({
+  AWAITING_SCRIPT: <span class="string">'awaiting_script_submission'</span>,
+  AWAITING_DOCTOR_SCRIPT: <span class="string">'awaiting_doctor_script_review'</span>,
+  AWAITING_COMPANY_SCRIPT: <span class="string">'awaiting_company_script_review'</span>,
+  AWAITING_RAW: <span class="string">'awaiting_raw_video'</span>,
+  AWAITING_RAW_QC: <span class="string">'awaiting_raw_qc'</span>,
+  AWAITING_RAW_REPLACEMENT: <span class="string">'awaiting_raw_replacement'</span>,
+  AWAITING_CUT: <span class="string">'awaiting_cut_submission'</span>,
+  AWAITING_COMPANY_CUT: <span class="string">'awaiting_company_cut_review'</span>,
+  AWAITING_DOCTOR_CUT: <span class="string">'awaiting_doctor_cut_review'</span>,
+  AWAITING_CUT_REVISION: <span class="string">'awaiting_cut_revision'</span>,
+  READY_TO_PUBLISH: <span class="string">'ready_to_publish'</span>,
+  SCHEDULED: <span class="string">'scheduled_for_publish'</span>,
+  PUBLISHED: <span class="string">'published'</span>,
+  OBSERVATION_DUE: <span class="string">'observation_due'</span>,
+  COMPLETED: <span class="string">'completed'</span>,
+  CANCELLED: <span class="string">'cancelled'</span>,
+});
+
+<span class="keyword">export const</span> DOMAIN_EVENT = Object.freeze({
+  SCRIPT_SUBMITTED: <span class="string">'script_version_submitted'</span>,
+  SCRIPT_APPROVED: <span class="string">'script_review_approved'</span>,
+  SCRIPT_CHANGES: <span class="string">'script_changes_requested'</span>,
+  RAW_SUBMITTED: <span class="string">'raw_video_submitted'</span>,
+  RAW_QC_APPROVED: <span class="string">'raw_qc_approved'</span>,
+  RAW_RETAKE: <span class="string">'raw_retake_requested'</span>,
+  CUT_SUBMITTED: <span class="string">'cut_version_submitted'</span>,
+  CUT_APPROVED: <span class="string">'cut_review_approved'</span>,
+  CUT_CHANGES: <span class="string">'cut_changes_requested'</span>,
+  FINAL_HANDED_OFF: <span class="string">'final_cut_handed_off'</span>,
+  PUBLICATION_SCHEDULED: <span class="string">'publication_scheduled'</span>,
+  PUBLISHED: <span class="string">'video_published'</span>,
+});
+
+<span class="keyword">export const</span> ANALYSIS_OUTCOME = Object.freeze({
+  SUGGESTED: <span class="string">'suggested'</span>,
+  NO_CHANGE: <span class="string">'no_state_change'</span>,
+  REVIEW_REQUIRED: <span class="string">'review_required'</span>,
+  UNKNOWN: <span class="string">'unknown'</span>,
+});</code></pre></div></details>
+
+      <details open><summary>2. 校验业务事件，而不是相信分类结果</summary><div><pre><code><span class="keyword">export function</span> validateDomainEvent(context, event) {
+  <span class="keyword">const</span> errors = [];
+  <span class="keyword">if</span> (!context.request) errors.push(<span class="string">'request_missing'</span>);
+  <span class="keyword">if</span> (!event.evidenceMessageUid) errors.push(<span class="string">'evidence_missing'</span>);
+  <span class="keyword">if</span> (!roleCanEmit(event.actorRole, event.type)) errors.push(<span class="string">'actor_role_forbidden'</span>);
+
+  <span class="keyword">if</span> (requiresVersion(event.type)) {
+    <span class="keyword">if</span> (!event.artifactVersionId) errors.push(<span class="string">'version_missing'</span>);
+    <span class="keyword">if</span> (event.artifactVersionId !== context.currentVersionId) errors.push(<span class="string">'stale_version'</span>);
+  }
+
+  <span class="keyword">if</span> (!transitionAllowed(context.request.status, event.type)) {
+    errors.push(<span class="string">'illegal_transition'</span>);
+  }
+  <span class="keyword">return</span> { ok: errors.length === 0, errors };
+}</code></pre></div></details>
+
+      <details><summary>3. 根据事实重新计算状态</summary><div><pre><code><span class="keyword">export function</span> deriveRequestStatus(projection) {
+  <span class="keyword">if</span> (projection.cancelled) <span class="keyword">return</span> REQUEST_STATUS.CANCELLED;
+  <span class="keyword">if</span> (projection.completed) <span class="keyword">return</span> REQUEST_STATUS.COMPLETED;
+  <span class="keyword">if</span> (projection.observationDue) <span class="keyword">return</span> REQUEST_STATUS.OBSERVATION_DUE;
+  <span class="keyword">if</span> (projection.published) <span class="keyword">return</span> REQUEST_STATUS.PUBLISHED;
+  <span class="keyword">if</span> (projection.publicationScheduled) <span class="keyword">return</span> REQUEST_STATUS.SCHEDULED;
+  <span class="keyword">if</span> (currentCutFullyApproved(projection)) <span class="keyword">return</span> REQUEST_STATUS.READY_TO_PUBLISH;
+  <span class="keyword">if</span> (projection.currentCutNeedsChanges) <span class="keyword">return</span> REQUEST_STATUS.AWAITING_CUT_REVISION;
+  <span class="keyword">if</span> (projection.currentCut) {
+    <span class="keyword">if</span> (projection.workType === <span class="string">'patient_education'</span> && !projection.companyCutApproved)
+      <span class="keyword">return</span> REQUEST_STATUS.AWAITING_COMPANY_CUT;
+    <span class="keyword">return</span> REQUEST_STATUS.AWAITING_DOCTOR_CUT;
+  }
+  <span class="keyword">if</span> (projection.rawNeedsReplacement) <span class="keyword">return</span> REQUEST_STATUS.AWAITING_RAW_REPLACEMENT;
+  <span class="keyword">if</span> (projection.rawQcApproved) <span class="keyword">return</span> REQUEST_STATUS.AWAITING_CUT;
+  <span class="keyword">if</span> (projection.currentRaw) <span class="keyword">return</span> REQUEST_STATUS.AWAITING_RAW_QC;
+  <span class="keyword">if</span> (currentScriptFullyApproved(projection)) <span class="keyword">return</span> REQUEST_STATUS.AWAITING_RAW;
+  <span class="keyword">if</span> (projection.currentScript) {
+    <span class="keyword">if</span> (projection.doctorScriptApproved && projection.workType === <span class="string">'patient_education'</span>)
+      <span class="keyword">return</span> REQUEST_STATUS.AWAITING_COMPANY_SCRIPT;
+    <span class="keyword">return</span> REQUEST_STATUS.AWAITING_DOCTOR_SCRIPT;
+  }
+  <span class="keyword">return</span> REQUEST_STATUS.AWAITING_SCRIPT;
+}</code></pre></div></details>
+
+      <details><summary>4. 人工校对后才生成正式事件</summary><div><pre><code><span class="keyword">export function</span> acceptHumanDecision(db, decision) {
+  db.exec(<span class="string">'BEGIN IMMEDIATE'</span>);
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> task = loadOpenReviewTask(db, decision.reviewTaskId);
+    <span class="keyword">const</span> event = buildDomainEvent(task, decision);
+    <span class="keyword">const</span> context = loadTransitionContext(db, event.requestId);
+    <span class="keyword">const</span> validation = validateDomainEvent(context, event);
+    <span class="keyword">if</span> (!validation.ok) <span class="keyword">throw new</span> Error(validation.errors.join(<span class="string">','</span>));
+
+    insertHumanDecision(db, decision);
+    insertWorkflowEvent(db, event);       <span class="comment">// append-only + unique evidence</span>
+    rebuildRequestProjection(db, event.requestId);
+    closeReviewTask(db, task.id);
+    db.exec(<span class="string">'COMMIT'</span>);
+  } <span class="keyword">catch</span> (error) {
+    db.exec(<span class="string">'ROLLBACK'</span>);
+    <span class="keyword">throw</span> error;
+  }
+}</code></pre></div></details>
+    </section>
+
+    <section id="current">
+      <h2>当前代码与正式版本的差距</h2>
+      <table>
+        <thead><tr><th>能力</th><th>当前状态</th><th>正式版本需要</th></tr></thead>
+        <tbody>
+          <tr><td>发送人角色</td><td>已有身份映射和未知身份保护</td><td>增加人工修正并持久化</td></tr>
+          <tr><td>消息事件分类</td><td>已有规则和可选大模型建议</td><td>将分析结果与业务事件表彻底分离</td></tr>
+          <tr><td>上下文候选</td><td>已有时间、数量和标题评分</td><td>绑定正式 Request 与具体版本</td></tr>
+          <tr><td>状态机</td><td>在内存中推进临时作品</td><td>通过事件回放计算正式状态</td></tr>
+          <tr><td>Request</td><td>没有正式表</td><td>建立主记录、负责人、业务类型和当前版本</td></tr>
+          <tr><td>文案/成片版本</td><td>没有正式版本链</td><td>不可覆盖、父版本关系、版本级审批</td></tr>
+          <tr><td>人工校对</td><td>已有 CSV</td><td>review_tasks 和 human_decisions 入库</td></tr>
+          <tr><td>状态写入</td><td>只读，不写业务状态</td><td>事务、幂等、合法转换和状态重算</td></tr>
+        </tbody>
+      </table>
+      <p>当前相关源码：</p>
+      <ul>
+        <li><a href="../../tools/video-pilot/core.mjs">tools/video-pilot/core.mjs</a>：现有状态、事件与分类规则；</li>
+        <li><a href="../../tools/video-pilot/analyze-groups.mjs">tools/video-pilot/analyze-groups.mjs</a>：聊天上下文、候选关联和人工校对输出；</li>
+        <li><a href="review.csv">docs/video-pilot/review.csv</a>：当前完整历史人工校对集；</li>
+        <li><a href="conversation-notes-20261009.md">conversation-notes-20261009.md</a>：近期讨论整理。</li>
+      </ul>
+    </section>
+
+    <div class="footer">科普麦子 · 单条视频状态机设计与代码 · 版本 2026-10-09。本文档描述目标设计，不代表正式状态写入已经上线。</div>
+  </main>
+</div>
+</body>
+</html>
