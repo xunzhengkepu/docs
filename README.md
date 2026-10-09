@@ -9,6 +9,10 @@
 
 ## 当前正式版本
 
+- [微信聊天判断视频流程可行性分析（2026-10-09 v01）](./video-feasibility-20261009/maizi-video-message-feasibility-20261009-v01.md)
+- [视频流程可行性人工复核样本（60条）](./video-feasibility-20261009/maizi-video-message-feasibility-sample-60-20261009-v01.csv)
+- [10个群完整视频流程分析报告](./video-feasibility-20261009/maizi-video-message-feasibility-full-report-20261009-v01.md)
+- [10个群完整视频流程复核表](./video-feasibility-20261009/maizi-video-message-feasibility-review-20261009-v01.csv)
 - [单条视频状态机设计与代码（2026-10-09 v01）](./maizi-video-state-machine-design-20261009-v01.html)
 - [科普麦子工作台项目全景说明（2026-10-06 v02）](./maizi-workhub-project-summary-20261006-v02.html)
 - [麦子工作台 PostgreSQL 数据库结构、ER 图与表关系（2026-10-06 v02）](./maizi-postgresql-database-structure-20261006-v02.html)
