@@ -9,6 +9,7 @@
 
 ## 当前正式版本
 
+- [20个微信群视频转换可判定性分析（2026-10-10 v01）](./video-feasibility-20261010/maizi-20-group-video-conversion-analysis-20261010-v01.html)
 - [微信聊天判断视频流程可行性分析（2026-10-09 v02）](./video-feasibility-20261009/maizi-video-message-feasibility-20261009-v02.md)
 - [视频流程可行性人工复核样本（60条）](./video-feasibility-20261009/maizi-video-message-feasibility-sample-60-20261009-v01.csv)
 - [10个群完整视频流程分析报告](./video-feasibility-20261009/maizi-video-message-feasibility-full-report-20261009-v01.md)

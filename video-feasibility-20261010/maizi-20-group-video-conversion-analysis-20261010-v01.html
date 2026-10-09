@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>科普麦子｜20个微信群视频转换可判定性分析</title>
+<style>
+:root{--ink:#14213d;--muted:#667085;--paper:#f5f7fb;--card:#fff;--blue:#2257d7;--cyan:#0b8f87;--orange:#e97835;--red:#c63d4d;--line:#dbe2ef;--soft:#eef3ff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+a{color:inherit}.page{max-width:1240px;margin:auto;padding:28px 26px 64px}.hero{position:relative;overflow:hidden;background:linear-gradient(125deg,#10224b 0%,#183a78 58%,#0b7d78 100%);color:#fff;border-radius:28px;padding:48px 52px;box-shadow:0 22px 55px #1e37662b}.hero:after{content:"";position:absolute;width:380px;height:380px;border:70px solid #ffffff10;border-radius:50%;right:-120px;top:-170px}.eyebrow{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#b8d7ff}h1{font-size:clamp(30px,4vw,52px);line-height:1.13;margin:12px 0 16px;max-width:820px}.hero p{max-width:820px;font-size:18px;color:#dbe7ff;margin:0}.meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:30px;color:#d6f1ef;font-size:13px}.section{margin-top:34px}h2{font-size:26px;margin:0 0 14px}h3{font-size:18px;margin:0 0 10px}.lead{color:var(--muted);max-width:900px;margin:0 0 18px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}.stat{background:#ffffff12;border:1px solid #ffffff27;border-radius:18px;padding:18px 20px;backdrop-filter:blur(8px)}.stat b{font-size:31px;display:block;line-height:1.1}.stat span{font-size:13px;color:#dbe7ff}.verdict{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 8px 30px #243b6b0d}.answer{border-left:5px solid var(--cyan)}.answer strong{font-size:23px;color:#08776f}.answer p{margin:8px 0 0}.mini-list{margin:0;padding-left:20px;color:#344054}.mini-list li+li{margin-top:8px}.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:18px}.flow div{position:relative;background:#fff;border:1px solid var(--line);padding:16px 10px;border-radius:14px;text-align:center;font-size:13px}.flow b{display:block;color:var(--blue);font-size:15px}.flow div:not(:last-child):after{content:"→";position:absolute;right:-11px;top:29%;z-index:2;color:#8aa0c6;background:var(--paper);padding:0 2px}.break{border-color:#ffc8b2!important;background:#fff8f4!important}.break b{color:var(--orange)!important}.table-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 30px #243b6b0d}table{width:100%;border-collapse:collapse;min-width:1160px}th{position:sticky;top:0;background:#edf2fb;color:#33466c;font-size:12px;letter-spacing:.04em;text-align:left;padding:12px 10px;border-bottom:1px solid var(--line)}td{padding:13px 10px;border-bottom:1px solid #edf0f5;vertical-align:top}tr:last-child td{border-bottom:0}tr:hover td{background:#fbfcff}.num{color:#98a2b3;width:38px}.metric{min-width:92px}.metric b{font-size:19px}.metric small{display:block;color:#7a8699}.metric i{display:block;width:var(--w);height:4px;background:var(--blue);border-radius:8px;margin-top:5px}.metric i.cut{background:var(--cyan)}.tag{display:inline-block;background:#eef3ff;color:#31559a;border-radius:99px;padding:4px 9px;font-size:12px;white-space:nowrap}.pill{display:inline-block;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;white-space:nowrap}.pill.good{background:#e9f9f2;color:#087459}.pill.warn{background:#fff6db;color:#8a5b00}.pill.risk{background:#fff0ed;color:#a83b2d}.pill.special{background:#f0ecff;color:#6544a5}.note{min-width:300px;color:#475467}.mobile-note{display:none}.reason-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.reason-card{background:#fff;border:1px solid var(--line);border-radius:17px;padding:18px 19px;box-shadow:0 5px 20px #243b6b09}.reason-top{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:8px}.reason-top span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--blue);font-weight:800}.reason-top b{font-size:16px}.reason-top em{font-style:normal;background:#fff0ed;color:#a83b2d;border-radius:99px;padding:2px 8px;font-size:11px}.reason-card p{color:#475467;margin:10px 0 13px}.reason-card footer{font-size:12px;color:#7a8699}.special-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.special-card{background:#172a52;color:#fff;border-radius:18px;padding:22px}.special-card:nth-child(2){background:#4d357c}.special-card:nth-child(3){background:#0c716c}.special-card p{color:#dce5fa;margin-bottom:0}.special-card b{font-size:28px}.actions{counter-reset:step;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.action{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 18px 18px 60px;position:relative}.action:before{counter-increment:step;content:counter(step);position:absolute;left:18px;top:18px;width:28px;height:28px;display:grid;place-items:center;background:var(--blue);color:#fff;border-radius:50%;font-weight:800}.action b{display:block;font-size:16px}.action span{color:#667085}.callout{margin-top:14px;background:#fff8e6;border:1px solid #f5d987;border-radius:16px;padding:16px 18px;color:#664d03}.method{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.method div{background:#fff;border:1px dashed #bdc9dc;border-radius:14px;padding:14px}.method b{display:block}.method span{color:#667085;font-size:13px}.foot{margin-top:38px;border-top:1px solid var(--line);padding-top:20px;color:#7a8699;font-size:12px}@media(max-width:900px){.page{padding:14px 12px 40px}.hero{padding:32px 24px;border-radius:20px}.stats,.method{grid-template-columns:repeat(2,1fr)}.verdict,.special-grid{grid-template-columns:1fr}.flow{grid-template-columns:repeat(2,1fr)}.reason-grid,.actions{grid-template-columns:1fr}}@media print{body{background:#fff}.page{max-width:none;padding:0}.hero,.panel,.table-wrap,.reason-card,.action{box-shadow:none}.table-wrap{overflow:visible}table{font-size:10px;min-width:0}th,td{padding:6px}.note{min-width:0}.panel,.reason-card,.action,.special-card{break-inside:avoid}}
+</style></head>
+<body><main class="page">
+<section class="hero"><div class="eyebrow">MAIZI WORKHUB · MANAGEMENT BRIEF</div><h1>20个微信群的视频转换<br>可判定性分析</h1><p>基于2026年6月4日至10月9日的微信群消息，评估仅依靠聊天上下文，能否确认“医生原片 → 员工成片 → 医生审核 → 发布”的业务链路。</p><div class="stats"><div class="stat"><b>20</b><span>纳入分析的微信群</span></div><div class="stat"><b>1,942</b><span>识别到的视频消息</span></div><div class="stat"><b>481</b><span>医生原片批次</span></div><div class="stat"><b>786</b><span>员工成片批次</span></div></div><div class="meta"><span>报告版本：2026-10-10 v01</span><span>上下文窗口：目标消息前后各10条</span><span>数据处理：只读分析，不改变业务状态</span></div></section>
+
+<section class="section verdict"><article class="panel answer"><h2>管理结论</h2><strong>聊天记录可以用于识别大部分明确流程，但目前不能作为全自动状态变更的唯一依据。</strong><p>一对一、单条提交、标题清楚、回复及时的群具备试点条件。批量录制、多版本修改、跨群执行和未知身份场景仍需人工确认。当前最大的技术缺口是视频归档只有 <code>[视频]</code>，没有稳定媒体ID、时长、文件哈希或视频文件。</p></article><article class="panel"><h3>本次人工复核确认的五个主要现象</h3><ol class="mini-list"><li>医生同时发送2—3个原视频。</li><li>员工把视频发到错误群。</li><li>医生一次没录好，连续发送多个版本。</li><li>湛主任回复较晚，无法按时间直接对应。</li><li>多人医生群和京医执行群不符合一对一医生群模型。</li></ol></article></section>
+
+<section class="section"><h2>为什么“看起来连续”仍不等于“确定对应”</h2><p class="lead">真正需要确认的是同一作品在不同阶段的身份连续性。任何一个节点缺少标题、引用、人员身份或媒体标识，系统就只能给出候选。</p><div class="flow"><div><b>Request</b>作品主题/编号</div><div><b>文案</b>脚本与标题</div><div class="break"><b>医生原片</b>可能批量/重录</div><div class="break"><b>员工成片</b>可能乱序/多版本</div><div><b>医生审核</b>可能短回复/延迟</div><div><b>发布</b>可能跨群完成</div></div></section>
+
+<section class="section"><h2>20个群逐群概览</h2><p class="lead">“原片批次/成片批次”是按角色与时间聚合后的业务候选；括号内视频条数反映批量发送。未知批次表示当前人员角色或视频性质不足以分类。判定建议是流程适配建议，不代表员工工作质量。</p><div class="table-wrap"><table><thead><tr><th>#</th><th>群名称</th><th>医生原片</th><th>员工成片</th><th>未知</th><th>流程形态</th><th>建议</th><th>主要观察</th></tr></thead><tbody><tr>
+<td class="num">01</td><td><strong>姜少燕 循证科普</strong><span class="mobile-note">27个原片批次包含多条视频；批量录制后分批剪辑，单条成片容易同时命中多个原片候选。</span></td>
+<td class="metric"><b>33</b><small>105条视频</small><i style="--w:100%"></i></td>
+<td class="metric"><b>56</b><small>56条视频</small><i class="cut" style="--w:53%"></i></td>
+<td class="metric"><b>9</b><small>未知批次</small></td>
+<td><span class="tag">批量原片型</span></td><td><span class="pill risk">需重点人工复核</span></td><td class="note">27个原片批次包含多条视频；批量录制后分批剪辑，单条成片容易同时命中多个原片候选。</td>
+</tr><tr>
+<td class="num">02</td><td><strong>心血管吴杰医生 循证科普</strong><span class="mobile-note">原片、成片数量都较多，多个作品并行；修改版和短回复较多，时间接近不能代表同一作品。</span></td>
+<td class="metric"><b>41</b><small>57条视频</small><i style="--w:54%"></i></td>
+<td class="metric"><b>76</b><small>77条视频</small><i class="cut" style="--w:73%"></i></td>
+<td class="metric"><b>13</b><small>未知批次</small></td>
+<td><span class="tag">高并行迭代型</span></td><td><span class="pill risk">需重点人工复核</span></td><td class="note">原片、成片数量都较多，多个作品并行；修改版和短回复较多，时间接近不能代表同一作品。</td>
+</tr><tr>
+<td class="num">03</td><td><strong>新野县人民医院肾内科吕晓鹏医生</strong><span class="mobile-note">10个原片批次含多条视频，另有21个未知视频批次；需要先补齐发送人角色，再做作品关联。</span></td>
+<td class="metric"><b>34</b><small>57条视频</small><i style="--w:54%"></i></td>
+<td class="metric"><b>26</b><small>30条视频</small><i class="cut" style="--w:29%"></i></td>
+<td class="metric"><b>21</b><small>未知批次</small></td>
+<td><span class="tag">批量原片＋身份缺口</span></td><td><span class="pill risk">需人工补充身份</span></td><td class="note">10个原片批次含多条视频，另有21个未知视频批次；需要先补齐发送人角色，再做作品关联。</td>
+</tr><tr>
+<td class="num">04</td><td><strong>郑秀君医生 循证医学科普</strong><span class="mobile-note">18个原片批次包含41条视频，13个批次为多视频；成片说明常只有“剪辑好了/修改好了”。</span></td>
+<td class="metric"><b>18</b><small>41条视频</small><i style="--w:39%"></i></td>
+<td class="metric"><b>29</b><small>33条视频</small><i class="cut" style="--w:31%"></i></td>
+<td class="metric"><b>6</b><small>未知批次</small></td>
+<td><span class="tag">集中录制型</span></td><td><span class="pill risk">需重点人工复核</span></td><td class="note">18个原片批次包含41条视频，13个批次为多视频；成片说明常只有“剪辑好了/修改好了”。</td>
+</tr><tr>
+<td class="num">05</td><td><strong>翟佳佳医生 循证科普</strong><span class="mobile-note">原片和成片规模接近，但存在批量录制、多个成片一起交付和修改版，单靠最近时间仍会误配。</span></td>
+<td class="metric"><b>25</b><small>32条视频</small><i style="--w:30%"></i></td>
+<td class="metric"><b>29</b><small>35条视频</small><i class="cut" style="--w:33%"></i></td>
+<td class="metric"><b>7</b><small>未知批次</small></td>
+<td><span class="tag">中度并行型</span></td><td><span class="pill warn">可试点＋人工复核</span></td><td class="note">原片和成片规模接近，但存在批量录制、多个成片一起交付和修改版，单靠最近时间仍会误配。</td>
+</tr><tr>
+<td class="num">06</td><td><strong>刘伟伟医生 循证医学科普</strong><span class="mobile-note">成片批次数量明显多于原片，说明同一作品存在多轮修改；必须区分初版、修改版和终版。</span></td>
+<td class="metric"><b>16</b><small>19条视频</small><i style="--w:18%"></i></td>
+<td class="metric"><b>36</b><small>36条视频</small><i class="cut" style="--w:34%"></i></td>
+<td class="metric"><b>7</b><small>未知批次</small></td>
+<td><span class="tag">版本迭代型</span></td><td><span class="pill risk">需版本管理</span></td><td class="note">成片批次数量明显多于原片，说明同一作品存在多轮修改；必须区分初版、修改版和终版。</td>
+</tr><tr>
+<td class="num">07</td><td><strong>王萌萌医生 循证科普</strong><span class="mobile-note">原片数量不大，但修改与定时发布信号较多；短回复需要引用关系才能准确落到作品。</span></td>
+<td class="metric"><b>17</b><small>22条视频</small><i style="--w:21%"></i></td>
+<td class="metric"><b>26</b><small>26条视频</small><i class="cut" style="--w:25%"></i></td>
+<td class="metric"><b>5</b><small>未知批次</small></td>
+<td><span class="tag">审核迭代型</span></td><td><span class="pill warn">可试点＋人工复核</span></td><td class="note">原片数量不大，但修改与定时发布信号较多；短回复需要引用关系才能准确落到作品。</td>
+</tr><tr>
+<td class="num">08</td><td><strong>张莹医生 循证科普</strong><span class="mobile-note">医生原片与员工成片数量最接近，一次一条为主；主要缺口是早期原片缺失和媒体身份不可验证。</span></td>
+<td class="metric"><b>18</b><small>18条视频</small><i style="--w:17%"></i></td>
+<td class="metric"><b>18</b><small>18条视频</small><i class="cut" style="--w:17%"></i></td>
+<td class="metric"><b>8</b><small>未知批次</small></td>
+<td><span class="tag">相对一对一</span></td><td><span class="pill good">优先试点</span></td><td class="note">医生原片与员工成片数量最接近，一次一条为主；主要缺口是早期原片缺失和媒体身份不可验证。</td>
+</tr><tr>
+<td class="num">09</td><td><strong>王江敏医生 循证科普</strong><span class="mobile-note">多数流程有明确审核回复，整体较清晰；少数批量原片与多版本成片仍需人工确认。</span></td>
+<td class="metric"><b>15</b><small>21条视频</small><i style="--w:20%"></i></td>
+<td class="metric"><b>16</b><small>18条视频</small><i class="cut" style="--w:17%"></i></td>
+<td class="metric"><b>3</b><small>未知批次</small></td>
+<td><span class="tag">相对清晰</span></td><td><span class="pill good">优先试点</span></td><td class="note">多数流程有明确审核回复，整体较清晰；少数批量原片与多版本成片仍需人工确认。</td>
+</tr><tr>
+<td class="num">10</td><td><strong>戴翠招医生 循证医学科普</strong><span class="mobile-note">没有未知视频批次，但成片多于原片，说明存在修改版或重复交付；需要作品ID和版本号。</span></td>
+<td class="metric"><b>12</b><small>17条视频</small><i style="--w:16%"></i></td>
+<td class="metric"><b>20</b><small>20条视频</small><i class="cut" style="--w:19%"></i></td>
+<td class="metric"><b>0</b><small>未知批次</small></td>
+<td><span class="tag">小规模迭代型</span></td><td><span class="pill warn">可试点＋人工复核</span></td><td class="note">没有未知视频批次，但成片多于原片，说明存在修改版或重复交付；需要作品ID和版本号。</td>
+</tr><tr>
+<td class="num">11</td><td><strong>荆菁医生-循证医学科普联盟对接群</strong><span class="mobile-note">任务量大，原片、成片、文案长期并行；21个成片批次在规则窗口内找不到原片候选。</span></td>
+<td class="metric"><b>57</b><small>64条视频</small><i style="--w:61%"></i></td>
+<td class="metric"><b>69</b><small>73条视频</small><i class="cut" style="--w:70%"></i></td>
+<td class="metric"><b>17</b><small>未知批次</small></td>
+<td><span class="tag">大规模并行型</span></td><td><span class="pill risk">需重点人工复核</span></td><td class="note">任务量大，原片、成片、文案长期并行；21个成片批次在规则窗口内找不到原片候选。</td>
+</tr><tr>
+<td class="num">12</td><td><strong>心内三科陈贝健 循证科普</strong><span class="mobile-note">24个原片批次包含53条视频，批量录制明显；员工成片数量较多，完成顺序不一定等于录制顺序。</span></td>
+<td class="metric"><b>24</b><small>53条视频</small><i style="--w:50%"></i></td>
+<td class="metric"><b>70</b><small>72条视频</small><i class="cut" style="--w:69%"></i></td>
+<td class="metric"><b>5</b><small>未知批次</small></td>
+<td><span class="tag">集中录制＋连续交付</span></td><td><span class="pill risk">需重点人工复核</span></td><td class="note">24个原片批次包含53条视频，批量录制明显；员工成片数量较多，完成顺序不一定等于录制顺序。</td>
+</tr><tr>
+<td class="num">13</td><td><strong>王力芬医生-循证科普</strong><span class="mobile-note">作品量较大且存在批次、修改、发布排期交叉；需要保留引用与标题才能稳定关联。</span></td>
+<td class="metric"><b>41</b><small>51条视频</small><i style="--w:49%"></i></td>
+<td class="metric"><b>62</b><small>71条视频</small><i class="cut" style="--w:68%"></i></td>
+<td class="metric"><b>10</b><small>未知批次</small></td>
+<td><span class="tag">中高并行型</span></td><td><span class="pill warn">可试点＋人工复核</span></td><td class="note">作品量较大且存在批次、修改、发布排期交叉；需要保留引用与标题才能稳定关联。</td>
+</tr><tr>
+<td class="num">14</td><td><strong>骨科湛主任·循证医学科普联盟</strong><span class="mobile-note">医生原片仅18批，成片78批，且有18个未知批次；两名主要剪辑人员并行，回复晚，流程很可能跨群或跨历史。</span></td>
+<td class="metric"><b>18</b><small>18条视频</small><i style="--w:17%"></i></td>
+<td class="metric"><b>78</b><small>81条视频</small><i class="cut" style="--w:77%"></i></td>
+<td class="metric"><b>18</b><small>未知批次</small></td>
+<td><span class="tag">延迟审核＋来源分散</span></td><td><span class="pill risk">暂不自动推进</span></td><td class="note">医生原片仅18批，成片78批，且有18个未知批次；两名主要剪辑人员并行，回复晚，流程很可能跨群或跨历史。</td>
+</tr><tr>
+<td class="num">15</td><td><strong>晏医生聊心脏 循证科普</strong><span class="mobile-note">21个原片批次包含42条视频，多个作品集中提交；虽然成片常有标题，具体原片仍容易形成多个候选。</span></td>
+<td class="metric"><b>21</b><small>42条视频</small><i style="--w:40%"></i></td>
+<td class="metric"><b>42</b><small>42条视频</small><i class="cut" style="--w:40%"></i></td>
+<td class="metric"><b>6</b><small>未知批次</small></td>
+<td><span class="tag">批量录制型</span></td><td><span class="pill risk">需重点人工复核</span></td><td class="note">21个原片批次包含42条视频，多个作品集中提交；虽然成片常有标题，具体原片仍容易形成多个候选。</td>
+</tr><tr>
+<td class="num">16</td><td><strong>康复医生李萌·循证科普对接</strong><span class="mobile-note">修改请求和素材替换频繁，部分成片说明只有图片或“修改好了”；容易把同一作品的多个版本当成多个作品。</span></td>
+<td class="metric"><b>26</b><small>36条视频</small><i style="--w:34%"></i></td>
+<td class="metric"><b>45</b><small>47条视频</small><i class="cut" style="--w:45%"></i></td>
+<td class="metric"><b>7</b><small>未知批次</small></td>
+<td><span class="tag">高修改频率型</span></td><td><span class="pill risk">需版本管理</span></td><td class="note">修改请求和素材替换频繁，部分成片说明只有图片或“修改好了”；容易把同一作品的多个版本当成多个作品。</td>
+</tr><tr>
+<td class="num">17</td><td><strong>库医生·循证医学科普联盟</strong><span class="mobile-note">原片多为一次一条，但多个作品同时处于剪辑和审核；员工成片无标题时，仍无法仅按时间对应。</span></td>
+<td class="metric"><b>32</b><small>32条视频</small><i style="--w:30%"></i></td>
+<td class="metric"><b>47</b><small>48条视频</small><i class="cut" style="--w:46%"></i></td>
+<td class="metric"><b>11</b><small>未知批次</small></td>
+<td><span class="tag">单条原片＋并行审核</span></td><td><span class="pill warn">可试点＋人工复核</span></td><td class="note">原片多为一次一条，但多个作品同时处于剪辑和审核；员工成片无标题时，仍无法仅按时间对应。</td>
+</tr><tr>
+<td class="num">18</td><td><strong>心血管内科房医生  循证科普</strong><span class="mobile-note">文案和成片标题通常较完整；明确难点集中在连续发两条原片、补发文案和医院已制作视频。</span></td>
+<td class="metric"><b>33</b><small>34条视频</small><i style="--w:32%"></i></td>
+<td class="metric"><b>41</b><small>42条视频</small><i class="cut" style="--w:40%"></i></td>
+<td class="metric"><b>13</b><small>未知批次</small></td>
+<td><span class="tag">文字说明较完整</span></td><td><span class="pill good">优先试点</span></td><td class="note">文案和成片标题通常较完整；明确难点集中在连续发两条原片、补发文案和医院已制作视频。</td>
+</tr><tr>
+<td class="num">19</td><td><strong>循证科普-京医执行群</strong><span class="mobile-note">88个视频批次全部无法归为医生原片或剪辑成片；这里主要处理多人、多医生的视频交付、审核、修改和排期。</span></td>
+<td class="metric"><b>0</b><small>0条视频</small><i style="--w:0%"></i></td>
+<td class="metric"><b>0</b><small>0条视频</small><i class="cut" style="--w:0%"></i></td>
+<td class="metric"><b>88</b><small>未知批次</small></td>
+<td><span class="tag">内部执行群</span></td><td><span class="pill special">不纳入医生原片模型</span></td><td class="note">88个视频批次全部无法归为医生原片或剪辑成片；这里主要处理多人、多医生的视频交付、审核、修改和排期。</td>
+</tr><tr>
+<td class="num">20</td><td><strong>小朱医生嵩医生牛医生-循证科普</strong><span class="mobile-note">80个视频批次均无法按标准角色分类；同一发送人转发多名医生作品，并使用第三版、第四版等外部审阅链接。</span></td>
+<td class="metric"><b>0</b><small>0条视频</small><i style="--w:0%"></i></td>
+<td class="metric"><b>0</b><small>0条视频</small><i class="cut" style="--w:0%"></i></td>
+<td class="metric"><b>80</b><small>未知批次</small></td>
+<td><span class="tag">多人转发/制作群</span></td><td><span class="pill special">不纳入医生原片模型</span></td><td class="note">80个视频批次均无法按标准角色分类；同一发送人转发多名医生作品，并使用第三版、第四版等外部审阅链接。</td>
+</tr></tbody></table></div></section>
+
+<section class="section"><h2>造成视频转换不清楚的完整原因</h2><p class="lead">原因分为业务操作、组织流程、沟通方式、内容性质、采集能力、数据质量和技术底座七类。前五项是此次人工查看中最常见的直接原因。</p><div class="reason-grid"><article class="reason-card"><div class="reason-top"><span>01</span><b>批量发送不同作品</b><em>高</em></div><p>医生短时间一次发送2—3个不同主题的原片，员工随后分批交付；没有逐条标题时，候选关系会形成多对多。</p><footer>业务操作</footer></article><article class="reason-card"><div class="reason-top"><span>02</span><b>同一作品多次重录</b><em>高</em></div><p>医生一次没录好，连续发送完整重录、局部补录或口误修正版；系统无法知道应保留哪一次。</p><footer>业务操作</footer></article><article class="reason-card"><div class="reason-top"><span>03</span><b>多段素材合成一条成片</b><em>高</em></div><p>多个视频文件可能是多个作品，也可能是同一作品的分段素材；“文件数量相同”不是可靠依据。</p><footer>业务操作</footer></article><article class="reason-card"><div class="reason-top"><span>04</span><b>员工成片顺序与原片不同</b><em>高</em></div><p>剪辑会按排期、难度、热点优先级调整顺序，不能把“最近的成片”直接匹配“最近的原片”。</p><footer>业务操作</footer></article><article class="reason-card"><div class="reason-top"><span>05</span><b>同一作品存在多轮版本</b><em>高</em></div><p>初版、修改版、补素材版、终版、卡审重发版都可能再次发送视频；只写“修改好了”时无法建立版本链。</p><footer>业务操作</footer></article><article class="reason-card"><div class="reason-top"><span>06</span><b>视频发错群或流程跨群</b><em>高</em></div><p>原片、成片、审核、发布可能分散在医生群、执行群、私聊或另一个项目群；单群记录只能看到半条链路。</p><footer>组织流程</footer></article><article class="reason-card"><div class="reason-top"><span>07</span><b>多人、多医生共用执行群</b><em>高</em></div><p>京医执行群和小朱/嵩/牛医生群不是一名医生对应一套流程，同一发送人会转发多个医生、多品牌、多日期作品。</p><footer>组织流程</footer></article><article class="reason-card"><div class="reason-top"><span>08</span><b>回复太晚或范围不明确</b><em>中高</em></div><p>“好”“可以”“这个改一下”可能晚数小时或数天出现；在多个待审核作品并行时，时间邻近规则失效。</p><footer>沟通方式</footer></article><article class="reason-card"><div class="reason-top"><span>09</span><b>视频并非医生原片</b><em>中高</em></div><p>医院制作成片、数字人视频、参考视频、平台退回视频和已发布视频也以 `[视频]` 出现，不能一律视为新原片。</p><footer>内容性质</footer></article><article class="reason-card"><div class="reason-top"><span>10</span><b>标题只存在于图片、语音或第一帧</b><em>高</em></div><p>例如“标题看第一张”“按语音改”，文字归档没有实际标题；图片资源未同步或语音未转写时无法恢复。</p><footer>采集能力</footer></article><article class="reason-card"><div class="reason-top"><span>11</span><b>外部链接、撤回和历史缺口</b><em>高</em></div><p>部分版本通过 mdl.ink 等外链交付；消息撤回、采集起点之前的原片，也会造成“只有成片、没有原片”。</p><footer>采集能力</footer></article><article class="reason-card"><div class="reason-top"><span>12</span><b>引用关系和人员身份不完整</b><em>中高</em></div><p>部分消息没有 sender-id、回复引用被截断或员工身份未映射，导致无法确认谁在执行哪个动作。</p><footer>数据质量</footer></article><article class="reason-card"><div class="reason-top"><span>13</span><b>缺少视频媒体身份</b><em>根因</em></div><p>当前归档只保存 `[视频]`，没有稳定媒体ID、时长、文件哈希和可下载文件，因此上下文判断合理时仍不能做文件级证明。</p><footer>技术底座</footer></article><article class="reason-card"><div class="reason-top"><span>14</span><b>相同标题被重复使用</b><em>中</em></div><p>同一主题可能首发、修改重发、卡审重发或跨平台再发；只用标题会把不同生产轮次合并。</p><footer>业务操作</footer></article></div></section>
+
+<section class="section"><h2>两个特殊群应单独建模</h2><div class="special-grid"><article class="special-card"><b>88</b><h3>京医执行群</h3><p>88个视频批次全部属于未知视频。群内是员工围绕多名医生、多个品牌和多个发布日期协作，没有医生原片入口，适合建“制作执行/交付版本”模型。</p></article><article class="special-card"><b>80</b><h3>小朱/嵩/牛医生群</h3><p>80个视频批次全部无法按标准角色分类。同一人员转发多名医生作品，并频繁使用第三版、第四版外链，适合建“多人作品转发/版本审阅”模型。</p></article><article class="special-card"><b>18 → 78</b><h3>湛主任群</h3><p>18个医生原片批次对应78个员工成片批次，另有18个未知批次。回复较晚、两名剪辑并行、部分来源不在当前群，是时间规则失效的典型。</p></article></div></section>
+
+<section class="section"><h2>规则候选结果应该如何解读</h2><div class="panel"><p>在18个医生对接群的786个员工成片批次中，规则层面有 <b>147个</b>形成明显领先候选，<b>504个</b>存在多个接近候选，<b>135个</b>在时间窗口内找不到原片。这个比例不能直接当成准确率：规则还没有使用视频文件指纹，也没有纳入全部跨群流程；它说明仅用“同群＋时间接近”不足以支撑自动改状态。</p><div class="callout"><b>统计边界：</b>本轮模型没有调用大模型；使用确定性规则和前后各10条消息生成候选，并结合人工查看形成原因分类。报告中的“不能确定”表示现有归档证据不足以证明一一对应，不表示业务没有完成。</div></div></section>
+
+<section class="section"><h2>建议的落地顺序</h2><div class="actions"><div class="action"><b>先选标准群试点</b><span>优先使用张莹、王江敏、房医生等流程相对清晰的群，保留人工确认。</span></div><div class="action"><b>为每个作品生成Request ID</b><span>医生发送原片时绑定“作品编号＋标题＋第几段/是否重录”。</span></div><div class="action"><b>员工提交时带同一编号和版本</b><span>例如“REQ-1024｜V2修改版｜待医生审核”，避免只写“修改好了”。</span></div><div class="action"><b>跨群转发保留来源</b><span>记录来源群、原消息ID、医生和标题，使执行群能够回连医生群。</span></div><div class="action"><b>补齐媒体与非文本采集</b><span>优先保存媒体ID、时长、文件哈希；同时补图片OCR、语音转写和外链文件名。</span></div><div class="action"><b>状态机只自动处理高置信事件</b><span>单一候选且标题、角色、引用一致时自动推进；其余进入人工校对队列。</span></div></div></section>
+
+<section class="section"><h2>分析口径</h2><div class="method"><div><b>范围</b><span>20个微信群，2026-06-04至2026-10-09</span></div><div><b>触发消息</b><span>视频、Word文件、180字以上长文本</span></div><div><b>状态信号</b><span>确认、修改、补录、定时、发布</span></div><div><b>安全边界</b><span>只生成候选与复核项，不写业务状态</span></div></div></section>
+
+<footer class="foot">科普麦子工作台 · 20个微信群视频转换可判定性分析 · 2026-10-10 v01<br>数据来源：本地微信消息归档与两批10群可行性分析结果。报告用于流程评估与试点决策。</footer>
+</main></body></html>
