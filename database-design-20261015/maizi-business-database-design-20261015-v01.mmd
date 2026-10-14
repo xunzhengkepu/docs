@@ -1,0 +1,20 @@
+erDiagram
+  PEOPLE ||--o{ PLATFORM_ACCOUNTS : owns
+  PEOPLE ||--o{ ENGAGEMENTS : doctor
+  PROJECTS ||--o{ ENGAGEMENTS : includes
+  ENGAGEMENTS ||--o{ WORKS : commissions
+  WORKS ||--o{ WORK_ASSETS : contains
+  ASSETS ||--o{ WORK_ASSETS : linked_to
+  WORKS o|--o{ PUBLICATIONS : published_as
+  WORK_ASSETS o|--o{ PUBLICATIONS : exact_version
+  WORKS o|--o{ EVENTS : history
+  WORK_ASSETS o|--o{ EVENTS : version_decision
+  TASKS o|--o{ EVENTS : action_history
+  ENGAGEMENTS o|--o{ EVENTS : cooperation_history
+  EVENTS ||--o{ EVENT_MESSAGES : evidence
+  MESSAGES ||--o{ EVENT_MESSAGES : cited_by
+  CONVERSATIONS ||--o{ MESSAGES : contains
+  CONVERSATIONS ||--o{ CONVERSATION_MEMBERS : contains
+  PLATFORM_ACCOUNTS ||--o{ CONVERSATION_MEMBERS : joins
+  MESSAGES ||--o{ MESSAGE_ANALYSIS : analyzed_as
+  WORKS o|--o{ TASKS : followup

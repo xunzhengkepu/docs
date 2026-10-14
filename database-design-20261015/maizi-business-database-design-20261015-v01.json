@@ -1,0 +1,659 @@
+{
+  "title": "科普麦子 · 按业务精简数据库",
+  "version": "20261015-v01",
+  "status": "design_only",
+  "scope": "作品生产、人员与合作关系、聊天证据、发布和同步；既有登录、会话、系统审计、通知基础设施不计入，沿用现有系统。",
+  "counts": {
+    "business": 8,
+    "identity": 2,
+    "chat": 4,
+    "support": 1,
+    "integration": 2,
+    "total": 17
+  },
+  "sources": [
+    {
+      "date": "2026-10-07",
+      "name": "PostgreSQL 精简数据库设计（18 表）",
+      "url": "../maizi-postgresql-simple-schema-20261007-v01.html"
+    },
+    {
+      "date": "2026-10-09",
+      "name": "单条视频状态机设计与代码",
+      "url": "../maizi-video-state-machine-design-20261009-v01.html"
+    },
+    {
+      "date": "2026-10-14",
+      "name": "三位医生视频流程核对（公开脱敏版）",
+      "url": "../doctor-video-audit-20261014/maizi-doctor-video-audit-redacted-20261014-v01.html"
+    },
+    {
+      "name": "现行业务规则",
+      "availability": "相关规则已归纳于本设计正文；不附内部源文件。"
+    },
+    {
+      "name": "历史 PostgreSQL 迁移方案（已归档）",
+      "availability": "仅作为设计沿革；不附内部源文件。"
+    }
+  ],
+  "tables": [
+    {
+      "name": "people",
+      "title": "人员",
+      "group": "identity",
+      "purpose": "员工、医生、客户联系人共用一个人员 ID；姓名只负责显示。",
+      "fields": [
+        {
+          "name": "id",
+          "meaning": "UUID 主键"
+        },
+        {
+          "name": "display_name / roles",
+          "meaning": "显示姓名；已确认身份集合，可兼任多个角色"
+        },
+        {
+          "name": "status / employee_code",
+          "meaning": "有效状态；可空的唯一员工编号"
+        },
+        {
+          "name": "organization / department / title",
+          "meaning": "医院或企业、部门或科室、职称或岗位等少量公共列"
+        },
+        {
+          "name": "profile",
+          "meaning": "JSONB，仅放低频专有资料，如专业方向；不存账号、权限、合作状态"
+        },
+        {
+          "name": "created_at / updated_at",
+          "meaning": "创建与最后更新时间"
+        }
+      ],
+      "rules": [
+        "合并三类 Profile；常用于筛选、约束、统计的字段仍用普通列。",
+        "显示“文案-某员工”“医生-某医生”由页面组合；原昵称留在账号及群成员中。",
+        "角色不是登录权限；账号归属和权限必须经过确认。"
+      ],
+      "references": []
+    },
+    {
+      "name": "platform_accounts",
+      "title": "平台账号",
+      "group": "identity",
+      "purpose": "一个人可以有多个微信/飞书/发布账号，未知账号也能先采集。",
+      "fields": [
+        {
+          "name": "id / person_id",
+          "meaning": "UUID 主键；人员可空"
+        },
+        {
+          "name": "platform / namespace / external_id",
+          "meaning": "平台、租户或账号 ID 的有效范围、稳定外部 ID"
+        },
+        {
+          "name": "nickname / ownership_status",
+          "meaning": "原昵称；unknown / inferred / verified"
+        },
+        {
+          "name": "ownership_evidence",
+          "meaning": "归属依据和核验时间；不存密码或令牌"
+        }
+      ],
+      "rules": [
+        "唯一键为 platform + namespace + external_id，不能按昵称去重。",
+        "群内身份推断不自动变成全局已核实人员绑定。"
+      ],
+      "references": [
+        "people"
+      ]
+    },
+    {
+      "name": "conversations",
+      "title": "群聊与私聊",
+      "group": "chat",
+      "purpose": "保存会话及业务默认上下文，作为查找线索。",
+      "fields": [
+        {
+          "name": "id / platform / namespace / external_id",
+          "meaning": "内部主键及来源会话稳定键"
+        },
+        {
+          "name": "name / kind",
+          "meaning": "原始名称；group / private"
+        },
+        {
+          "name": "default_engagement_id",
+          "meaning": "可空，医生与项目合作关系的默认线索"
+        },
+        {
+          "name": "owner_person_id",
+          "meaning": "默认对接人，可空"
+        },
+        {
+          "name": "last_message_at",
+          "meaning": "派生缓存"
+        }
+      ],
+      "rules": [
+        "群不能强制一对一绑定一个作品。",
+        "跨项目群的默认合作关系留空；作品归属由明确证据决定。"
+      ],
+      "references": [
+        "engagements",
+        "people"
+      ]
+    },
+    {
+      "name": "conversation_members",
+      "title": "群内成员",
+      "group": "chat",
+      "purpose": "保存同一账号在各群的昵称、身份与核验依据。",
+      "fields": [
+        {
+          "name": "conversation_id / account_id",
+          "meaning": "联合主键"
+        },
+        {
+          "name": "group_nickname / role_in_group",
+          "meaning": "群昵称及群内角色"
+        },
+        {
+          "name": "role_status / evidence",
+          "meaning": "unknown / inferred / verified；依据"
+        },
+        {
+          "name": "first_seen_at / last_seen_at",
+          "meaning": "观测时间，不冒充实际入群/退群时间"
+        }
+      ],
+      "rules": [
+        "保留此表以支持同人不同群昵称、医生助理与医生本人的区别。",
+        "群成员列表不直接决定员工的数据访问权限。"
+      ],
+      "references": [
+        "conversations",
+        "platform_accounts"
+      ]
+    },
+    {
+      "name": "messages",
+      "title": "原始消息",
+      "group": "chat",
+      "purpose": "只保存聊天事实，包括视频占位消息；不要求视频下载。",
+      "fields": [
+        {
+          "name": "id / uid",
+          "meaning": "BIGINT 内部主键；有来源范围的稳定消息唯一键"
+        },
+        {
+          "name": "conversation_id / sender_account_id",
+          "meaning": "会话；发送账号可空"
+        },
+        {
+          "name": "sent_at / message_type / content",
+          "meaning": "来源时间、文本/视频/文件等类型、正文"
+        },
+        {
+          "name": "reply_to_message_id",
+          "meaning": "可空；引用的原消息"
+        },
+        {
+          "name": "source_payload / ingested_at",
+          "meaning": "最小必要来源数据及采集时间；剔除令牌和临时授权参数"
+        }
+      ],
+      "rules": [
+        "不因 AI 分析而修改原始正文或发送者。",
+        "撤回、补充及来源修正作为追加记录保留，不静默改写原证据。",
+        "重复采集使用 uid 幂等；来源缺口需单独标明。"
+      ],
+      "references": [
+        "conversations",
+        "platform_accounts",
+        "messages"
+      ]
+    },
+    {
+      "name": "message_analysis",
+      "title": "分析结果",
+      "group": "chat",
+      "purpose": "保存机器候选、理由和分析版本；与正式事实分开。",
+      "fields": [
+        {
+          "name": "id / anchor_message_id",
+          "meaning": "主键；上下文分析所锚定的消息"
+        },
+        {
+          "name": "analyzer_version / input_hash",
+          "meaning": "规则/模型/提示版本及完整上下文输入指纹"
+        },
+        {
+          "name": "run_status / suggestions",
+          "meaning": "执行结果及候选作品、版本、事件、置信度 JSONB"
+        },
+        {
+          "name": "created_at",
+          "meaning": "分析时间"
+        }
+      ],
+      "rules": [
+        "唯一键 anchor_message_id + analyzer_version + input_hash；新分析不覆盖旧结果。",
+        "候选 ID 可以保存在暂存 JSON 中，但正式写入时必须解析成受约束外键。",
+        "人工接受、拒绝、改正保存为 events；重新跑模型不能撤销人工决定。"
+      ],
+      "references": [
+        "messages"
+      ]
+    },
+    {
+      "name": "projects",
+      "title": "项目",
+      "group": "business",
+      "purpose": "保存客户项目与业务规则版本。",
+      "fields": [
+        {
+          "name": "id / code / name / status",
+          "meaning": "项目主键、唯一编码、名称和状态"
+        },
+        {
+          "name": "client_name",
+          "meaning": "当前只需名称；没有独立企业业务时不拆企业表"
+        },
+        {
+          "name": "policy_version / policy",
+          "meaning": "版本化配置：科普/患教比例、审核路线、工作日规则、交付要求"
+        }
+      ],
+      "rules": [
+        "不为每个项目建立一套作品表。",
+        "现有科普/患教比例用配置表达；统计基于已确认发布，不能把发稿计作发布。",
+        "修改项目规则只改变后续默认值；已有作品保存自己的政策快照。"
+      ],
+      "references": []
+    },
+    {
+      "name": "engagements",
+      "title": "医生 × 项目合作",
+      "group": "business",
+      "purpose": "医生在某个项目中的负责人、暂停新增发稿和合作周期。",
+      "fields": [
+        {
+          "name": "id / project_id / doctor_person_id",
+          "meaning": "主键、项目、医生"
+        },
+        {
+          "name": "engagement_no / started_at / ended_at",
+          "meaning": "合作期编号及起止时间；恢复同一期可沿用"
+        },
+        {
+          "name": "status / new_script_paused / pause_reason",
+          "meaning": "合作状态；是否暂停新增发稿及原因"
+        },
+        {
+          "name": "owner_person_id / writer_person_id / editor_person_id",
+          "meaning": "当前默认运营、文案、剪辑；可以待分配"
+        },
+        {
+          "name": "upload_scope",
+          "meaning": "受控云盘标识：provider / namespace / folder_id；允许多个入口，不存登录凭据"
+        }
+      ],
+      "rules": [
+        "同医生可在多个项目合作；同项目同医生通常只允许一个未结束合作期。",
+        "停新增发稿不停止已有作品剪辑。",
+        "只有已确认分配可用于授权；作品另行分配时保留历史并调整显式访问规则。"
+      ],
+      "references": [
+        "projects",
+        "people"
+      ]
+    },
+    {
+      "name": "works",
+      "title": "作品",
+      "group": "business",
+      "purpose": "一篇独立稿件/明确建档的交付单元，贯穿写稿、录制、剪辑、审核和发布。",
+      "fields": [
+        {
+          "name": "id / code / engagement_id",
+          "meaning": "稳定主键、唯一作品编号、所属合作关系"
+        },
+        {
+          "name": "title / work_type",
+          "meaning": "标题可修改；science / education 等业务类型"
+        },
+        {
+          "name": "owner_person_id / writer_person_id / editor_person_id",
+          "meaning": "作品实际负责人；不随合作默认分配变化而静默改写"
+        },
+        {
+          "name": "policy_snapshot / policy_version",
+          "meaning": "建档时审核路线、必需输出规格、工作日规则快照"
+        },
+        {
+          "name": "stage / blockers / projection_version",
+          "meaning": "由确认事件计算的当前阶段、待办原因与投影版本；禁止独立手填"
+        },
+        {
+          "name": "lifecycle / lock_version",
+          "meaning": "active / paused / cancelled；并发版本号"
+        },
+        {
+          "name": "origin_source_record_id / created_at",
+          "meaning": "可空的外部来源映射及建档时间"
+        }
+      ],
+      "rules": [
+        "同一个作品不再另建 requests 或 video_tasks 主记录；作品数不等于视频文件数。",
+        "不因一段无标题视频或一句选题讨论自动建作品；历史素材允许未归属。",
+        "current_script / current_cut 按用途与输出规格从版本选择事件查询；不能用一个 cut_id 代表所有输出规格。"
+      ],
+      "references": [
+        "engagements",
+        "people",
+        "source_records"
+      ]
+    },
+    {
+      "name": "assets",
+      "title": "文件内容版本",
+      "group": "business",
+      "purpose": "登记观察到的文案、原片、剪辑文件和云文档快照；可尚未对应作品。",
+      "fields": [
+        {
+          "name": "id / media_type",
+          "meaning": "版本主键；document / video / image / other"
+        },
+        {
+          "name": "provider / namespace / object_id / revision_key",
+          "meaning": "云盘或文档平台、空间、稳定对象 ID、内容修订键"
+        },
+        {
+          "name": "revision_assurance",
+          "meaning": "stable_revision / verified_snapshot / provisional；说明是否能可靠锁定旧版"
+        },
+        {
+          "name": "file_name / current_locator",
+          "meaning": "当前文件名及位置；位置与内容身份分离"
+        },
+        {
+          "name": "content_hash / hash_algorithm / byte_size",
+          "meaning": "可空的内容指纹、算法、大小；无文件内容时不伪造哈希"
+        },
+        {
+          "name": "availability / first_seen_at / last_seen_at / source_record_id",
+          "meaning": "present / unavailable / unknown；观测时间与来源快照"
+        }
+      ],
+      "rules": [
+        "唯一来源键为 provider + namespace + object_id + revision_key；重命名、移动不产生新内容版本。",
+        "修改内容必须登记新版本。无可靠修订号时保留“暂定版本”，不能用当前文件冒充历史审片版。",
+        "哈希不做全局唯一：相同内容可以有多个存储副本；不同剪辑内容也不会因为名字一样而合并。",
+        "没有可靠版本历史的云盘接入，需验证不可覆盖命名或受控快照机制后才能保证审核回放。"
+      ],
+      "references": [
+        "source_records"
+      ]
+    },
+    {
+      "name": "work_assets",
+      "title": "作品与文件关联",
+      "group": "business",
+      "purpose": "表达一作品多素材、一素材多作品，以及具体文案/成片版本。",
+      "fields": [
+        {
+          "name": "id / work_id / asset_id",
+          "meaning": "关联主键、作品和文件内容版本"
+        },
+        {
+          "name": "role / version_no / variant",
+          "meaning": "script / raw / cut / reference；业务版本号和输出规格"
+        },
+        {
+          "name": "relation_state / match_basis",
+          "meaning": "proposed / confirmed / rejected；关联依据"
+        },
+        {
+          "name": "supersedes_link_id",
+          "meaning": "同作品、同用途、同规格的上一业务版本，可空"
+        },
+        {
+          "name": "review_requirements / review_round",
+          "meaning": "提交该版本时冻结的审核门槛、顺序与当前复审轮次"
+        },
+        {
+          "name": "lock_version",
+          "meaning": "避免两人同时选择版本或接受冲突关联"
+        }
+      ],
+      "rules": [
+        "同一文件可供多个作品使用；关系一经确认，work_id、asset_id、role 不原地换对象。误配通过撤销事件更正。",
+        "确定版本身份与确定作品归属是两件事；provisional 文件仍不能自动完成版本级审核。",
+        "同一作品+用途+规格中的业务版本号唯一；同一文件关联可幂等重复读取。",
+        "同属一个作品仅说明业务归属，不证明某成片逐帧来自哪几个原片。第一期不建设剪辑工程的素材血缘图。"
+      ],
+      "references": [
+        "works",
+        "assets",
+        "work_assets"
+      ]
+    },
+    {
+      "name": "events",
+      "title": "正式业务与操作记录",
+      "group": "business",
+      "purpose": "合并作品历史、任务历史、审核结论、人工校对决定；只追加。",
+      "fields": [
+        {
+          "name": "id / root_type / engagement_id / work_id / task_id",
+          "meaning": "根对象限定 engagement / work / task，三个根外键恰有一个非空"
+        },
+        {
+          "name": "event_type / occurred_at / recorded_at",
+          "meaning": "明确事件类型；实际发生时间与入库时间分开"
+        },
+        {
+          "name": "actor_person_id / recorded_by_person_id / origin",
+          "meaning": "实际行动者、录入或确认人、manual / rule / import；允许来源未知但不得冒认"
+        },
+        {
+          "name": "work_asset_id / publication_id",
+          "meaning": "作品事件可指向具体文件关联或发布事实；必须属于同一作品"
+        },
+        {
+          "name": "review_gate / review_round / decision",
+          "meaning": "审核门槛、轮次、approved / changes_requested / withdrawn；仅审核类使用"
+        },
+        {
+          "name": "caused_by_event_id / supersedes_event_id",
+          "meaning": "校对决定产生的后续业务事件；明确撤销/更正引用，禁止循环"
+        },
+        {
+          "name": "source_record_id / idempotency_key / payload",
+          "meaning": "非聊天来源、幂等键、原因/前后值/必要规则版本等扩展证据"
+        }
+      ],
+      "rules": [
+        "没有 entity_type + 任意字符串 ID 的万能关联；正式外键有固定目标。",
+        "审核必须绑定 work_assets 的确切版本、审核角色和轮次；人工操作人不等于医生审核人。",
+        "错误事件不删除；由有权限的更正/撤销事件抵消。冲突审核进入阻塞，不能简单“最新一句赢”。",
+        "events 存最终事实或人工处置；机器候选只在 message_analysis / proposed 关联中。",
+        "一条消息可产生多个事实；幂等键须包括语义事件、根对象和版本，不能仅以 message_id 去重。"
+      ],
+      "references": [
+        "engagements",
+        "works",
+        "tasks",
+        "people",
+        "work_assets",
+        "publications",
+        "events",
+        "source_records"
+      ]
+    },
+    {
+      "name": "event_messages",
+      "title": "事件与聊天证据",
+      "group": "support",
+      "purpose": "一个事件可由多条消息共同证明；一条消息也可证明多个事件。",
+      "fields": [
+        {
+          "name": "event_id / message_id / evidence_role",
+          "meaning": "联合唯一键；trigger / context / confirmation / contradiction"
+        }
+      ],
+      "rules": [
+        "用真正外键保留多对多证据，避免把一组消息塞进无约束 ID 数组。",
+        "文件证据用 events.work_asset_id，外部表证据用 source_record_id。"
+      ],
+      "references": [
+        "events",
+        "messages"
+      ]
+    },
+    {
+      "name": "tasks",
+      "title": "需独立处理的待办",
+      "group": "business",
+      "purpose": "待回复、人工核对、催办和需要单独认领/升级的动作。",
+      "fields": [
+        {
+          "name": "id / kind / status",
+          "meaning": "主键；reply / verify / followup / exception / action；open / doing / done / dismissed"
+        },
+        {
+          "name": "engagement_id / work_id / work_asset_id",
+          "meaning": "可空的业务上下文；有作品时必须属于对应合作关系"
+        },
+        {
+          "name": "conversation_id / trigger_message_id / analysis_id",
+          "meaning": "可空的会话、消息、分析来源"
+        },
+        {
+          "name": "asset_id / publication_id",
+          "meaning": "可空：核对未归属文件或发布记录，不能强塞进一个作品"
+        },
+        {
+          "name": "assignee_person_id / due_at / priority",
+          "meaning": "当前责任人、截止时间、优先级"
+        },
+        {
+          "name": "dedupe_key / resolved_at / lock_version",
+          "meaning": "规则稳定键、解决时间、并发版本号"
+        }
+      ],
+      "rules": [
+        "普通待剪辑/待审片/待发布列表由作品与审核视图生成，不再为每次状态变化机械创建一行任务。",
+        "确需独立分派和时限的具体动作可以建任务，但任务完成不自动证明作品已交付或审核通过。",
+        "取消、忽略、规则不再命中，与真实处理完成分开。消息响应 SLA 不套用视频交付 SLA。"
+      ],
+      "references": [
+        "engagements",
+        "works",
+        "work_assets",
+        "conversations",
+        "messages",
+        "message_analysis",
+        "assets",
+        "publications",
+        "people"
+      ]
+    },
+    {
+      "name": "publications",
+      "title": "实际发布",
+      "group": "business",
+      "purpose": "保存每个平台实际发出的内容；先有发布记录、后匹配作品也允许。",
+      "fields": [
+        {
+          "name": "id / platform_account_id / external_id",
+          "meaning": "发布记录主键、平台账号、平台内容 ID"
+        },
+        {
+          "name": "url / published_at / observed_at",
+          "meaning": "稳定公开作品链接、实际发布时间、发现时间"
+        },
+        {
+          "name": "work_id / work_asset_id / linkage_status",
+          "meaning": "可空；confirmed / proposed / unlinked。仅主题确认时允许文件版本为空"
+        },
+        {
+          "name": "verification_status / source_record_id",
+          "meaning": "manual / platform_verified / pending；原始来源"
+        },
+        {
+          "name": "availability / metrics / metrics_observed_at",
+          "meaning": "可见/下架/未知；最新指标及其采样时点"
+        }
+      ],
+      "rules": [
+        "唯一键为发布平台账号 + external_id；无平台 ID 时按规范化 URL 暂存并后续合并。",
+        "预约发布时间放事件，不提前建“已发布”事实。误配解绑不删除原平台记录。",
+        "实际已发布可以确认，即使缺少历史审核或精确终版；页面展示缺口，不补造审核历史。",
+        "视频产量按已发布作品去重；发布条数按平台帖子统计，二者明确区分。指标历史有真实需求再拆表。"
+      ],
+      "references": [
+        "platform_accounts",
+        "works",
+        "work_assets",
+        "source_records"
+      ]
+    },
+    {
+      "name": "source_records",
+      "title": "外部来源当前快照",
+      "group": "integration",
+      "purpose": "保留外部表、云盘目录等原始记录与稳定来源键，支持核对迁移。",
+      "fields": [
+        {
+          "name": "id / source_kind / source_instance / source_collection / record_key",
+          "meaning": "主键及四元来源唯一键"
+        },
+        {
+          "name": "content_hash / raw_payload / observed_at",
+          "meaning": "当前快照指纹、脱敏必要原始数据和读取时间"
+        },
+        {
+          "name": "mapped_kind / mapped_id",
+          "meaning": "只作迁移诊断映射，不作为业务外键或授权依据"
+        }
+      ],
+      "rules": [
+        "聊天正文不再完整复制一份到这里。只更新变化的当前快照，不声称能恢复所有历史外部表。",
+        "引用此表的正式事件仍保存当时必要证据切片/快照哈希；否则快照更新会使历史解释失真。",
+        "文件历史内容需要 assets 中的可靠版本或受控快照；当前来源快照不能代替版本。"
+      ],
+      "references": []
+    },
+    {
+      "name": "sync_state",
+      "title": "同步水位与健康",
+      "group": "integration",
+      "purpose": "每个来源与同步范围一行，说明数据新鲜度、权限与覆盖范围。",
+      "fields": [
+        {
+          "name": "pipeline / scope_key",
+          "meaning": "联合主键；账号、群、云盘空间/目录等范围"
+        },
+        {
+          "name": "cursor / cursor_version",
+          "meaning": "成功提交后的游标与并发版本"
+        },
+        {
+          "name": "last_attempt_at / last_success_at / covered_through",
+          "meaning": "最后尝试、成功、数据实际覆盖到的时间"
+        },
+        {
+          "name": "last_full_scan_at / coverage / status",
+          "meaning": "最近全量核对时间、complete / partial / unknown、状态与错误摘要"
+        }
+      ],
+      "rules": [
+        "一批数据提交成功后才推进游标；每 10 分钟运行不等于最近 10 分钟一定同步成功。",
+        "账号切换、微信重新登录或权限范围变化要更换/核对 scope，不沿用其他账号的游标。",
+        "扫描失败不能清空文件、把未见记录批量标删除，或判定作品未完成。"
+      ],
+      "references": []
+    }
+  ],
+  "implementation_boundary": "公开设计与字段目录，不含真实聊天数据、人员名单、内部资源链接或本机文件路径。尚未执行 DDL、数据迁移或生产数据库写入。"
+}
