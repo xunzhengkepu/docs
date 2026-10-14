@@ -1,0 +1,130 @@
+erDiagram
+    people ||--o{ people_companies : "人员"
+    companies ||--o{ people_companies : "公司"
+    projects ||--o{ project_companies : "项目"
+    companies ||--o{ project_companies : "合作方"
+    projects ||--o{ project_people : "项目"
+    people ||--o{ project_people : "参与人"
+    people ||--o{ videos : "医生"
+    people o|--o{ videos : "总负责人可空"
+    projects o|--o{ videos : "项目可空"
+    videos ||--o{ status_changes : "已生效修改"
+    people o|--o{ status_changes : "修改人"
+    videos o|--o{ files : "归属可待核实"
+    people o|--o{ files : "检查人"
+    videos ||--o{ reviews : "审核要求"
+    files o|--o{ reviews : "具体版本可待补"
+    people o|--o{ reviews : "审核人"
+    people o|--o{ reviews : "确认记录人"
+    files ||--o{ deliveries : "交付版本"
+    people ||--o{ deliveries : "接收人"
+    people ||--o{ deliveries : "记录人"
+    videos ||--o{ publications : "定时及发布"
+    files o|--o{ publications : "发布版本可待补"
+    people o|--o{ publications : "确认人"
+    videos o|--o{ todos : "关联视频可空"
+    projects o|--o{ todos : "关联项目可空"
+    people o|--o{ todos : "负责人"
+    people o|--o{ todos : "提出人"
+    people o|--o{ todos : "处理人"
+    people["人员 · people"] {
+        string id PK
+        string name
+        string roles
+        string wechat_id
+    }
+    companies["公司 · companies"] {
+        string id PK
+        string name
+    }
+    projects["项目 · projects"] {
+        string id PK
+        string name
+        string requirements
+    }
+    people_companies["人员与公司 · people_companies"] {
+        string person_id PK,FK
+        string company_id PK,FK
+        string relationship
+    }
+    project_companies["项目与公司 · project_companies"] {
+        string project_id PK,FK
+        string company_id PK,FK
+        string role
+    }
+    project_people["项目参与人 · project_people"] {
+        string project_id PK,FK
+        string person_id PK,FK
+        string roles
+    }
+    videos["视频 · videos"] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string content_type
+        string current_status
+        int status_revision
+        datetime planned_publish_at
+        string evidence_status
+    }
+    status_changes["状态修改历史 · status_changes"] {
+        string id PK
+        string video_id FK
+        string actor_id FK
+        string from_status
+        string to_status
+        int revision
+        datetime changed_at
+        string source
+    }
+    files["文件与版本 · files"] {
+        string id PK
+        string video_id FK
+        string checked_by FK
+        string kind
+        string version_label
+        string drive_file_id
+        string availability
+    }
+    reviews["审核与确认 · reviews"] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string reviewer_id FK
+        string recorded_by FK
+        int round_no
+        int order_group
+        boolean required
+        string result
+    }
+    deliveries["交付 · deliveries"] {
+        string id PK
+        string file_id FK
+        string recipient_id FK
+        string recorded_by FK
+        datetime delivered_at
+    }
+    publications["定时与发布 · publications"] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string confirmed_by FK
+        string platform
+        string status
+        datetime scheduled_at
+        datetime published_at
+        string url
+    }
+    todos["待办与系统建议 · todos"] {
+        string id PK
+        string video_id FK
+        string project_id FK
+        string assignee_id FK
+        string requester_id FK
+        string resolved_by FK
+        string kind
+        string status
+        string proposed_status
+        int based_on_revision
+    }

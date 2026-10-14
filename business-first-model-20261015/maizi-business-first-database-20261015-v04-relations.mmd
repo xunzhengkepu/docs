@@ -1,0 +1,51 @@
+erDiagram
+    people ||--o{ people_companies : "人员"
+    companies ||--o{ people_companies : "公司"
+    projects ||--o{ project_companies : "项目"
+    companies ||--o{ project_companies : "合作方"
+    projects ||--o{ project_people : "项目"
+    people ||--o{ project_people : "参与人"
+    people ||--o{ videos : "医生"
+    people o|--o{ videos : "总负责人可空"
+    projects o|--o{ videos : "项目可空"
+    people["人员 · people"] {
+        string id PK
+        string name
+        string roles
+        string wechat_id
+    }
+    companies["公司 · companies"] {
+        string id PK
+        string name
+    }
+    projects["项目 · projects"] {
+        string id PK
+        string name
+        string requirements
+    }
+    people_companies["人员与公司 · people_companies"] {
+        string person_id PK,FK
+        string company_id PK,FK
+        string relationship
+    }
+    project_companies["项目与公司 · project_companies"] {
+        string project_id PK,FK
+        string company_id PK,FK
+        string role
+    }
+    project_people["项目参与人 · project_people"] {
+        string project_id PK,FK
+        string person_id PK,FK
+        string roles
+    }
+    videos["视频 · videos"] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string content_type
+        string current_status
+        int status_revision
+        datetime planned_publish_at
+        string evidence_status
+    }
