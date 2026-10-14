@@ -1,0 +1,141 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>麦子工作台 · 精简业务设计 v03</title><style>
+body{font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif;color:#203247;background:#f3f6fa;margin:0}main{max-width:1200px;margin:auto;padding:42px 24px}h1{font-size:34px}h2{margin-top:48px}a{color:#146b85}section,.note{background:white;padding:24px;border-radius:16px;margin:20px 0}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #dbe3ea;padding:14px;text-align:left;vertical-align:top}th{background:#e9f2f5}code{font-size:13px}.diagram{overflow:auto;background:white;border:1px solid #ddd;border-radius:12px}.diagram img{display:block;max-width:100%;width:100%}.flow img{width:760px;max-width:100%;margin:auto}nav a{margin-right:20px}.tag{color:#146b85;font-weight:bold}li{margin:8px 0}summary{cursor:pointer}pre{white-space:pre-wrap;font-size:12px}button{padding:7px 14px;margin:8px;cursor:pointer}</style><main>
+<div class="tag">讨论稿 · 2026-10-15 · v03</div><h1>跟谁合作，视频做到哪，还有什么事没办</h1>
+<p>按本次聊天修订：人员只用 people 一张表；微信账号直接放在人上；不加入职日期、医院科室，不建独立账号表。本文是设计稿，尚未修改运行中的数据库。</p>
+<nav><a href="#erd">数据库关系图</a><a href="#flow">业务逻辑图</a><a href="#tables">每张表记什么</a><a href="#rules">怎么判断完成</a></nav>
+<section><h2 style="margin-top:0">先用大白话讲清楚</h2><p>员工继续在微信里发稿、发文件、沟通。系统整理出一条条视频，把稿子、原片、成片、审核、交付和发布串起来；遇到需要人处理的问题，再列待办。不要求员工额外填写“内容单”。</p><p>医生、公司、项目独立存在。有合作才关联，没有关系就不关联。自有医生也能参加客户项目，日常视频可以没有项目。</p><p><b>9 类主要记录 + 3 张关系表 = 12 张逻辑表。</b>关系表只负责记“谁和谁有关”，不是增加三项员工工作。聊天采集和同步沿用现有系统，不在这里重建。</p></section>
+<h2 id="erd">01 / 数据库关系图</h2><p>一条视频贯穿整个制作过程。圈表示可以没有，分叉表示可以有多条；PK 是编号或组合主键，FK 是指向其他记录的编号。</p>
+<p><a href="maizi-business-first-database-20261015-v03-erd.svg" target="_blank">打开大图</a> · <a href="maizi-business-first-database-20261015-v03-erd.mmd" download>下载 Mermaid 源码</a></p><div class="diagram erd"><img src="maizi-business-first-database-20261015-v03-erd.svg" alt="ERD 图"></div><details><summary>查看图表源码</summary><pre>erDiagram
+    people ||--o{ people_companies : &quot;与公司有关系&quot;
+    companies ||--o{ people_companies : &quot;关联人员&quot;
+    projects ||--o{ project_companies : &quot;对应公司&quot;
+    companies ||--o{ project_companies : &quot;参与项目&quot;
+    projects ||--o{ project_people : &quot;有哪些人&quot;
+    people ||--o{ project_people : &quot;参与项目&quot;
+    people ||--o{ videos : &quot;出镜医生&quot;
+    people o|--o{ videos : &quot;总负责人可空&quot;
+    projects o|--o{ videos : &quot;可属于项目&quot;
+    videos ||--o{ files : &quot;稿件原片成片&quot;
+    files ||--o{ reviews : &quot;审核这一版&quot;
+    people ||--o{ reviews : &quot;审核人&quot;
+    files ||--o{ deliveries : &quot;交付这一版&quot;
+    people ||--o{ deliveries : &quot;接收人&quot;
+    videos ||--o{ publications : &quot;实际发布&quot;
+    files o|--o{ publications : &quot;发布版本可待核实&quot;
+    people o|--o{ todos : &quot;负责人可空&quot;
+    people o|--o{ todos : &quot;提出人可空&quot;
+    videos o|--o{ todos : &quot;可以关联视频&quot;
+    projects o|--o{ todos : &quot;可以关联项目&quot;
+    people[&quot;人员 · people&quot;] {
+        string id PK
+        string name
+        string roles
+        string wechat_id
+    }
+    companies[&quot;公司 · companies&quot;] {
+        string id PK
+        string name
+    }
+    projects[&quot;项目 · projects&quot;] {
+        string id PK
+        string name
+    }
+    people_companies[&quot;人员与公司 · people_companies&quot;] {
+        string person_id PK,FK
+        string company_id PK,FK
+        string relationship
+    }
+    project_companies[&quot;项目与公司 · project_companies&quot;] {
+        string project_id PK,FK
+        string company_id PK,FK
+        string role
+    }
+    project_people[&quot;项目参与人 · project_people&quot;] {
+        string project_id PK,FK
+        string person_id PK,FK
+        string role
+    }
+    videos[&quot;视频 · videos&quot;] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string title
+        string stage
+        string evidence_status
+    }
+    files[&quot;文件版本 · files&quot;] {
+        string id PK
+        string video_id FK
+        string kind
+        string version
+        string location
+    }
+    reviews[&quot;审核 · reviews&quot;] {
+        string id PK
+        string file_id FK
+        string reviewer_id FK
+        string result
+    }
+    deliveries[&quot;交付 · deliveries&quot;] {
+        string id PK
+        string file_id FK
+        string recipient_id FK
+    }
+    publications[&quot;发布 · publications&quot;] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string platform
+        string url
+    }
+    todos[&quot;待办 · todos&quot;] {
+        string id PK
+        string assignee_id FK
+        string requester_id FK
+        string video_id FK
+        string project_id FK
+        string description
+        string status
+    }
+</pre></details>
+<h2 id="flow">02 / 业务逻辑图</h2><p>主线管理视频；旁边的支线管理待办。审核的人和审核要求按合作约定，不能因为医生是“自有”或“项目指定”就自动决定。</p>
+<p><a href="maizi-business-first-database-20261015-v03-flow.svg" target="_blank">打开大图</a> · <a href="maizi-business-first-database-20261015-v03-flow.mmd" download>下载 Mermaid 源码</a></p><div class="diagram flow"><img src="maizi-business-first-database-20261015-v03-flow.svg" alt="FLOW 图"></div><details><summary>查看图表源码</summary><pre>flowchart TD
+    a[&quot;员工在微信发初稿&quot;] --&gt; b[&quot;系统识别是哪位医生、哪条视频&quot;]
+    b --&gt; c{&quot;能确定归属吗&quot;}
+    c --&gt;|不能| d[&quot;列入待核对，由人确认&quot;]
+    d --&gt; e[&quot;建立或关联同一条视频记录&quot;]
+    c --&gt;|能| e
+    e --&gt; f[&quot;确认稿子：按合作要求审核具体版本&quot;]
+    f --&gt; g{&quot;稿子通过了吗&quot;}
+    g --&gt;|要改| h[&quot;修改稿子，保留新版本&quot;]
+    h --&gt; f
+    g --&gt;|通过| i[&quot;医生录制，收到原片&quot;]
+    i --&gt; j[&quot;剪辑，保存成片版本&quot;]
+    j --&gt; k[&quot;按合作要求审片&quot;]
+    k --&gt; l{&quot;这一版通过了吗&quot;}
+    l --&gt;|要改| j
+    l --&gt;|通过| m[&quot;把确认的成片交给接收人，留下交付记录&quot;]
+    m --&gt; n[&quot;发布，记录平台、链接和时间&quot;]
+    n --&gt; o{&quot;约定的平台都发布完成了吗&quot;}
+    o --&gt;|还没有| n
+    o --&gt;|完成| p[&quot;这条视频完成&quot;]
+    q[&quot;聊天中出现问题、补录请求或缺失信息&quot;] --&gt; r[&quot;建待办：做什么、谁负责、怎样算完成&quot;]
+    r --&gt; s[&quot;处理并核实结果&quot;]
+    s --&gt; t[&quot;关闭待办&quot;]
+    r -.-&gt;|需要时关联| e
+</pre></details>
+<h2 id="tables">03 / 每张表到底记什么</h2><p>图中展示主要字段，下表补充业务需要的信息；时间、来源消息定位按需保留。所有编号由系统管理。</p><section style="overflow:auto"><table><thead><tr><th>记录名称</th><th>一行代表什么</th><th>主要信息</th></tr></thead><tbody><tr><td><b>人员</b><br><code>people</code></td><td>一个人</td><td>id PK；name 姓名；roles 身份（可多个）；wechat_id 微信 ID（可空）；wechat_label 微信昵称或备注</td></tr><tr><td><b>公司</b><br><code>companies</code></td><td>一家公司</td><td>id PK；name 公司名称</td></tr><tr><td><b>项目</b><br><code>projects</code></td><td>一个项目</td><td>id PK；name 项目名称；requirements 合作要求</td></tr><tr><td><b>人员与公司</b><br><code>people_companies</code></td><td>一个人与一家公司的关系</td><td>person_id FK；company_id FK；relationship 关系说明</td></tr><tr><td><b>项目与公司</b><br><code>project_companies</code></td><td>一个项目与一家公司的关系</td><td>project_id FK；company_id FK；role 客户或合作方</td></tr><tr><td><b>项目参与人</b><br><code>project_people</code></td><td>一个人参与一个项目</td><td>project_id FK；person_id FK；role 在这个项目的分工或参与身份</td></tr><tr><td><b>视频</b><br><code>videos</code></td><td>一条从初稿做到发布的视频</td><td>id PK；title 题目；doctor_id FK；project_id FK 可空；owner_id FK 可空；stage 当前进度；evidence_status 证据情况；required_platforms 约定发布平台；due_at 截止时间可空；source_ref 初稿消息定位</td></tr><tr><td><b>文件版本</b><br><code>files</code></td><td>一条视频的一份具体文件版本</td><td>id PK；video_id FK；kind 稿件/原片/成片；version 版本标记；location 文件位置；created_at 时间；source_ref 来源消息</td></tr><tr><td><b>审核</b><br><code>reviews</code></td><td>一个人对一个具体文件版本的一次审核</td><td>id PK；file_id FK；reviewer_id FK；result 通过/要修改；comment 意见；reviewed_at 时间；source_ref 依据</td></tr><tr><td><b>交付</b><br><code>deliveries</code></td><td>把某版成片发给某个人的一次记录</td><td>id PK；file_id FK；recipient_id FK；delivered_at 时间；source_ref 发送依据</td></tr><tr><td><b>发布</b><br><code>publications</code></td><td>一条视频在一个平台的一次实际发布</td><td>id PK；video_id FK；file_id FK 可空；platform 发布平台；url 链接；published_at 时间；source_ref 发布依据</td></tr><tr><td><b>待办</b><br><code>todos</code></td><td>一件需要有人办完的事</td><td>id PK；description 要做什么；requester_id FK 可空；assignee_id FK 可空；video_id FK 可空；project_id FK 可空；status 状态；done_when 完成条件；due_at 可空；completed_at 可空；source_ref 来源消息</td></tr></tbody></table></section>
+<h2 id="rules">04 / 业务规则与简化边界</h2><section><ul>
+<li><b>人员：</b>一个人一条 people；身份可多个，微信 ID 可暂缺。已知微信 ID 不重复。姓名和昵称不能代替稳定编号。</li>
+<li><b>合作关系：</b>三张关系表按两端编号组合唯一；没有关系时不建行。公司合作、项目参与分别记录，不能互相推断。项目分工可记录多个角色。</li>
+<li><b>视频：</b>修改标题、稿子或成片不新建视频。医生身份需校验；初稿尚不能匹配医生时先待核对，不硬塞到某个医生名下。</li>
+<li><b>文件：</b>这版每条文件记录归属一条视频。素材若用于多条视频，可分别引用同一文件位置，先不建设复杂的共享素材库；版本标记在该视频内应能区分具体文件。</li>
+<li><b>审核：</b>明确谁对哪一版说了什么。旧版通过不等于新版通过；返工后重新按要求审核。</li>
+<li><b>交付：</b>记录发给谁、发的哪一版；交付文件应是成片。交付完成不等于发布完成。</li>
+<li><b>发布：</b>按约定的平台核对完成，有链接和时间作为依据。平台要求未明确时先核实；不能把“已上传”“收到”当作已发布。发布对应的文件如已填写，必须属于同一条视频。</li>
+<li><b>待办：</b>写清做什么、谁负责、怎么才算办完。可以不属于视频；已有视频时项目优先由视频得出，额外填写的项目必须一致。待剪辑、待审片直接从进度显示，不重复生成普通阶段任务。</li>
+<li><b>时间：</b>没有明确交期就不判断逾期。补稿、比例统计是另外的运营规则，按项目需要启用，不塞进每条视频的必经流程。</li>
+<li><b>证据：</b>“业务做到哪”和“证据是否齐全”分开。例如已确认交片，但文件位置待核实。找不到证据不能直接判没完成。</li>
+<li><b>消息：</b>直接引用已有聊天记录的稳定定位，必要时保留简短依据。业务库不再复制聊天成员、消息分析、同步等整套表；程序需检查跨库引用。</li>
+</ul></section><p>本页记录的是当前精简方案。历史 v01、v02 保留作对照，不再作为本版表结构约束。</p></main>

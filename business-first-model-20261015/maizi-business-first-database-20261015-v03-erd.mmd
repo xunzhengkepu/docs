@@ -1,0 +1,93 @@
+erDiagram
+    people ||--o{ people_companies : "与公司有关系"
+    companies ||--o{ people_companies : "关联人员"
+    projects ||--o{ project_companies : "对应公司"
+    companies ||--o{ project_companies : "参与项目"
+    projects ||--o{ project_people : "有哪些人"
+    people ||--o{ project_people : "参与项目"
+    people ||--o{ videos : "出镜医生"
+    people o|--o{ videos : "总负责人可空"
+    projects o|--o{ videos : "可属于项目"
+    videos ||--o{ files : "稿件原片成片"
+    files ||--o{ reviews : "审核这一版"
+    people ||--o{ reviews : "审核人"
+    files ||--o{ deliveries : "交付这一版"
+    people ||--o{ deliveries : "接收人"
+    videos ||--o{ publications : "实际发布"
+    files o|--o{ publications : "发布版本可待核实"
+    people o|--o{ todos : "负责人可空"
+    people o|--o{ todos : "提出人可空"
+    videos o|--o{ todos : "可以关联视频"
+    projects o|--o{ todos : "可以关联项目"
+    people["人员 · people"] {
+        string id PK
+        string name
+        string roles
+        string wechat_id
+    }
+    companies["公司 · companies"] {
+        string id PK
+        string name
+    }
+    projects["项目 · projects"] {
+        string id PK
+        string name
+    }
+    people_companies["人员与公司 · people_companies"] {
+        string person_id PK,FK
+        string company_id PK,FK
+        string relationship
+    }
+    project_companies["项目与公司 · project_companies"] {
+        string project_id PK,FK
+        string company_id PK,FK
+        string role
+    }
+    project_people["项目参与人 · project_people"] {
+        string project_id PK,FK
+        string person_id PK,FK
+        string role
+    }
+    videos["视频 · videos"] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string title
+        string stage
+        string evidence_status
+    }
+    files["文件版本 · files"] {
+        string id PK
+        string video_id FK
+        string kind
+        string version
+        string location
+    }
+    reviews["审核 · reviews"] {
+        string id PK
+        string file_id FK
+        string reviewer_id FK
+        string result
+    }
+    deliveries["交付 · deliveries"] {
+        string id PK
+        string file_id FK
+        string recipient_id FK
+    }
+    publications["发布 · publications"] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string platform
+        string url
+    }
+    todos["待办 · todos"] {
+        string id PK
+        string assignee_id FK
+        string requester_id FK
+        string video_id FK
+        string project_id FK
+        string description
+        string status
+    }
