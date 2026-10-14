@@ -9,7 +9,7 @@
 
 ## 当前正式版本
 
-- [科普麦子数据库 ERD 与业务流程设计（2026-10-15 v02）](./database-design-20261015/maizi-business-database-design-20261015-v02.html)
+- [科普麦子全工作台业务数据模型、ERD 与流程（2026-10-15 v01）](./business-first-model-20261015/maizi-business-first-database-20261015-v01.html)
 - [三位医生视频流程核对·公开脱敏版（2026-10-14 v01）](./doctor-video-audit-20261014/maizi-doctor-video-audit-redacted-20261014-v01.html)
 - [20个微信群视频转换可判定性分析（2026-10-10 v01）](./video-feasibility-20261010/maizi-20-group-video-conversion-analysis-20261010-v01.html)
 - [微信聊天判断视频流程可行性分析（2026-10-09 v02）](./video-feasibility-20261009/maizi-video-message-feasibility-20261009-v02.md)
@@ -24,6 +24,7 @@
 
 ## 历史正式版本
 
+- [科普麦子数据库 ERD 与业务流程设计（2026-10-15 v02）](./database-design-20261015/maizi-business-database-design-20261015-v02.html)
 - [科普麦子按业务精简数据库设计（2026-10-15 v01）](./database-design-20261015/maizi-business-database-design-20261015-v01.html)
 - [微信聊天判断视频流程可行性分析（2026-10-09 v01）](./video-feasibility-20261009/maizi-video-message-feasibility-20261009-v01.md)
 - [麦子工作台 PostgreSQL 数据库结构（2026-10-03 v01）](./maizi-postgresql-database-structure-20261003-v01.html)
