@@ -1,0 +1,65 @@
+erDiagram
+  people["人员 people"] {
+    id id PK
+    text name
+    text roles
+    text company_relationship "医生公司关系"
+  }
+  projects["项目 projects"] {
+    id id PK
+    text name
+    json content_rules
+  }
+  collaborations["医生合作 collaborations"] {
+    id id PK
+    id project_id FK "日常合作可空"
+    id doctor_id FK
+    text selection_source "项目选人方式"
+  }
+  contents["内容单 contents"] {
+    id id PK
+    id collaboration_id FK
+    text production_stage
+  }
+  files["文件记录 files"] {
+    id id PK
+    text source_ref
+    text revision_ref
+  }
+  contentMaterials["内容素材引用 content_materials"] {
+    id content_id PK, FK
+    id file_id PK, FK
+    text purpose
+  }
+  contentVersions["送审版本 content_versions"] {
+    id id PK
+    id content_id FK
+    id file_id FK
+  }
+  reviews["审核意见 reviews"] {
+    id id PK
+    id version_id FK
+    text decision
+  }
+  deliveries["交付记录 deliveries"] {
+    id id PK
+    id content_id FK
+    id version_id FK "历史可空"
+  }
+  publications["平台发布 publications"] {
+    id id PK
+    id content_id FK "待匹配可空"
+    id version_id FK "历史可空"
+  }
+  people ||..o{ collaborations : "医生参与"
+  projects o|..o{ collaborations : "可归属项目"
+  collaborations ||..o{ contents : "形成内容"
+  contents ||--o{ contentMaterials : "引用原片"
+  files ||--o{ contentMaterials : "提供素材"
+  contents ||..o{ contentVersions : "产生送审版本"
+  files ||..o{ contentVersions : "锁定确切文件"
+  contentVersions ||..o{ reviews : "接受审核"
+  contents ||..o{ deliveries : "实际交付"
+  contentVersions o|..o{ deliveries : "指定交付版本"
+  contents o|..o{ publications : "匹配发布内容"
+  contentVersions o|..o{ publications : "匹配精确版本"

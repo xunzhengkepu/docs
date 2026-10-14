@@ -1,0 +1,548 @@
+{
+  "title": "科普麦子：从业务出发的数据模型",
+  "version": "20261015-v02",
+  "scope": "整个麦子工作台：项目与医生合作、视频生产、聊天待回复、员工协作。范围由用户确认。",
+  "status": "logical_design_draft",
+  "tables": [
+    {
+      "name": "people",
+      "label": "人员",
+      "question": "谁参与这项业务",
+      "grain": "员工、医生、企业审核人；一个人一条记录。",
+      "fields": [
+        {
+          "name": "id",
+          "meaning": "稳定人员编号"
+        },
+        {
+          "name": "name / roles",
+          "meaning": "真实显示名与业务角色"
+        },
+        {
+          "name": "company_relationship",
+          "meaning": "医生与公司的关系：公司自有/非自有/待确认；非医生为空"
+        },
+        {
+          "name": "organization / position / active",
+          "meaning": "单位、岗位及是否有效"
+        }
+      ],
+      "rule": "姓名不是唯一键；医生独立于项目存在。公司自有是业务合作标记，不等于公司雇员，也不由签约二字、联盟等级或客户指定自动推断。业务角色不直接等于登录权限。"
+    },
+    {
+      "name": "projects",
+      "label": "项目",
+      "question": "替哪个客户执行什么合作要求",
+      "grain": "一个客户项目一条记录。",
+      "fields": [
+        {
+          "name": "id / name",
+          "meaning": "项目编号和名称"
+        },
+        {
+          "name": "content_rules",
+          "meaning": "科普/患教比例及约定的统计口径"
+        },
+        {
+          "name": "review_rules / delivery_rules",
+          "meaning": "按内容类型的审核顺序、交付规格和工作日约定"
+        }
+      ],
+      "rule": "配置只表达已确定的业务选项；不建设通用流程引擎。规则更改不追溯改写已经送审的要求。"
+    },
+    {
+      "name": "collaborations",
+      "label": "医生合作",
+      "question": "这位医生做日常运营还是项目合作、由谁对接",
+      "grain": "一个医生的一段日常合作，或在一个项目中的一段合作，一条记录。",
+      "fields": [
+        {
+          "name": "id / doctor_id",
+          "meaning": "合作编号、医生"
+        },
+        {
+          "name": "project_id",
+          "meaning": "项目可空：空表示日常合作；有值表示项目合作"
+        },
+        {
+          "name": "selection_source",
+          "meaning": "项目选人方式：公司医生池/项目方指定/其他/待确认；日常合作为空"
+        },
+        {
+          "name": "owner_id",
+          "meaning": "当前对接负责人"
+        },
+        {
+          "name": "status / new_content_paused",
+          "meaning": "合作状态；是否暂停新增稿"
+        },
+        {
+          "name": "started_at / ended_at",
+          "meaning": "合作期起止"
+        }
+      ],
+      "rule": "同一医生可有日常合作并参加多个项目，不重复建人。项目方指定也可能选中公司自有医生，两种属性不互斥。项目为空须已确认属于日常合作；归属不明先留候选。合作期或归属变化新建适用合作，不改写已有内容归属。暂停新增稿仅作用于该合作。"
+    },
+    {
+      "name": "contents",
+      "label": "内容单",
+      "question": "我们到底要完成哪一条内容",
+      "grain": "一篇独立稿件所对应的制作与交付单元一条记录；修改标题不换编号。",
+      "fields": [
+        {
+          "name": "id / code / collaboration_id",
+          "meaning": "内容编号及所属日常或项目合作；项目由合作推导"
+        },
+        {
+          "name": "title / content_type",
+          "meaning": "标题；科普/患教/待确认"
+        },
+        {
+          "name": "writer_id / editor_id / owner_id",
+          "meaning": "当前文案、剪辑与运营负责人"
+        },
+        {
+          "name": "production_stage / lifecycle",
+          "meaning": "制作阶段；正常/暂停/取消"
+        },
+        {
+          "name": "materials_ready_at / edit_due_at",
+          "meaning": "确认素材完整可用的时间及剪辑交片截止"
+        },
+        {
+          "name": "planned_publish_at / rule_snapshot",
+          "meaning": "约定档期；本条内容适用规则快照（日常约定或项目约定）"
+        },
+        {
+          "name": "row_version",
+          "meaning": "防止多人修改互相覆盖"
+        }
+      ],
+      "rule": "从明确稿件建档。日常内容不强制挂客户项目，也不因医生后来参加项目而自动计入该项目；归属纠错需明确操作并留审计。交付、发布状态从各自记录查看。"
+    },
+    {
+      "name": "files",
+      "label": "文件记录",
+      "question": "收到的具体文件是哪一个内容版本",
+      "grain": "一份可区分的文件内容版本一条记录；尚未归属内容也可登记。",
+      "fields": [
+        {
+          "name": "id / origin_collaboration_id",
+          "meaning": "文件编号；已知的来源合作，可空"
+        },
+        {
+          "name": "name / media_type",
+          "meaning": "文件名与类型"
+        },
+        {
+          "name": "source_ref / revision_ref",
+          "meaning": "来源平台、空间、对象 ID 与内容修订标识"
+        },
+        {
+          "name": "location_ref",
+          "meaning": "当前目录或访问位置，与文件身份分开"
+        },
+        {
+          "name": "content_hash / identity_quality",
+          "meaning": "可空指纹；可靠版本/仅线索"
+        },
+        {
+          "name": "observed_at / availability",
+          "meaning": "发现时间与当前可访问性"
+        }
+      ],
+      "rule": "移动或改名只改变位置；替换内容产生新版本记录。没有历史版本依据时不能拿当前文件冒充当时文件。"
+    },
+    {
+      "name": "content_materials",
+      "label": "内容素材引用",
+      "question": "这条内容用了哪些原片或参考素材",
+      "grain": "一个内容与一份素材的确认关联一条记录。",
+      "fields": [
+        {
+          "name": "content_id / file_id",
+          "meaning": "内容与文件，组成唯一关联键"
+        },
+        {
+          "name": "purpose",
+          "meaning": "口播、手绘、补录、参考等用途"
+        },
+        {
+          "name": "confirmed_by / confirmed_at",
+          "meaning": "谁在何时确认归属"
+        }
+      ],
+      "rule": "一条内容多份原片，同一原片也可用于多条内容。只增加引用，不复制视频文件。归属不明先留在文件收件列表。"
+    },
+    {
+      "name": "content_versions",
+      "label": "送审版本",
+      "question": "这次请对方确认的究竟是哪一版",
+      "grain": "一次明确选定文件的送审版本一条记录。文案、成片及需审核封面按 kind 区分。",
+      "fields": [
+        {
+          "name": "id / content_id / file_id",
+          "meaning": "送审版本编号、内容、确切文件"
+        },
+        {
+          "name": "kind / variant / version_no",
+          "meaning": "文案或成片等；输出规格；业务版次"
+        },
+        {
+          "name": "submitted_by / submitted_at",
+          "meaning": "提交人和实际送审时间"
+        },
+        {
+          "name": "review_requirements",
+          "meaning": "本次所需审核角色及顺序快照"
+        },
+        {
+          "name": "selected / withdrawn_at",
+          "meaning": "是否为当前选定版本；是否已撤回"
+        }
+      ],
+      "rule": "一个送审版本只指定一份确切文件。内容修改、换文件或重新发起新轮审批都建立新送审版本；相同文件也可重新送审。不同规格分别管理，不自动继承批准。"
+    },
+    {
+      "name": "reviews",
+      "label": "审核意见",
+      "question": "谁对哪一版作出了什么决定",
+      "grain": "一次有明确对象的审核决定一条记录。",
+      "fields": [
+        {
+          "name": "id / version_id",
+          "meaning": "审核记录及对应送审版本"
+        },
+        {
+          "name": "reviewer_id / reviewer_role",
+          "meaning": "实际审核人及本次角色"
+        },
+        {
+          "name": "decision / reviewed_at",
+          "meaning": "通过/要求修改/撤回；实际决定时间"
+        },
+        {
+          "name": "recorded_by / recorded_at",
+          "meaning": "录入人和录入时间，与审核人分开"
+        },
+        {
+          "name": "evidence / supersedes_review_id",
+          "meaning": "少量证据引用及必要摘录；明确更正对象，可空"
+        }
+      ],
+      "rule": "只追加决定，纠错通过明确更正记录处理。版本不明的“可以”不能变成批准；同一门槛冲突时停在待核对，不默认最后一句胜出。"
+    },
+    {
+      "name": "deliveries",
+      "label": "交付记录",
+      "question": "给谁交了哪一份、何时交的",
+      "grain": "一次向接收方交付某个内容版本一条记录。",
+      "fields": [
+        {
+          "name": "id / content_id / version_id",
+          "meaning": "交付编号、内容；确切版本可空以保留历史事实"
+        },
+        {
+          "name": "recipient_id / delivery_kind",
+          "meaning": "接收人；审片发送/终版交付/类型待确认"
+        },
+        {
+          "name": "delivered_at / delivery_ref",
+          "meaning": "实际交付时间及稳定位置或发送凭据"
+        },
+        {
+          "name": "recorded_by / evidence",
+          "meaning": "记录人及少量依据"
+        }
+      ],
+      "rule": "审片发送不等于终版交付。一套含两种规格可以有两条版本交付记录，产量仍是一个内容。历史版不明可保留交片事实，但不宣称已满足终版要求。"
+    },
+    {
+      "name": "publications",
+      "label": "平台发布",
+      "question": "平台实际上发出了什么",
+      "grain": "某账号在某平台的一条实际帖子一条记录。",
+      "fields": [
+        {
+          "name": "id / publisher_account_id / external_id",
+          "meaning": "发布编号、平台账号及平台内容 ID"
+        },
+        {
+          "name": "content_id / version_id",
+          "meaning": "可空的内容及确切版本关联"
+        },
+        {
+          "name": "url / published_at",
+          "meaning": "实际发布链接和时间"
+        },
+        {
+          "name": "verification / observed_at",
+          "meaning": "人工登记/平台核验/待核实；发现时间"
+        }
+      ],
+      "rule": "排期不建已发布记录。同内容发两个平台算两条帖子、一个已发布内容。历史真实发布可以先登记，不倒推或补造缺失审核。"
+    },
+    {
+      "name": "platform_accounts",
+      "label": "外部账号",
+      "question": "微信或发布平台上的账号是谁",
+      "grain": "一个平台及其有效 ID 范围内的一个账号一条记录。",
+      "fields": [
+        {
+          "name": "id / platform / namespace / external_id",
+          "meaning": "内部账号编号及来源账号唯一键"
+        },
+        {
+          "name": "person_id",
+          "meaning": "确认对应的人员，可空"
+        },
+        {
+          "name": "nickname / binding_status",
+          "meaning": "原昵称；未知/推断/确认"
+        }
+      ],
+      "rule": "一个人可以有多个账号；未知账号先保留。不按昵称合并人，也不把群内角色推断当作全局身份确认。"
+    },
+    {
+      "name": "conversations",
+      "label": "沟通场所",
+      "question": "这些话发生在哪个群或私聊",
+      "grain": "一个稳定来源会话一条记录。",
+      "fields": [
+        {
+          "name": "id / platform / namespace / external_id",
+          "meaning": "内部会话编号与来源范围内的平台稳定键"
+        },
+        {
+          "name": "name / kind",
+          "meaning": "原群名；群聊或私聊"
+        },
+        {
+          "name": "default_project_id / owner_id",
+          "meaning": "默认项目线索、默认对接人，均可空"
+        }
+      ],
+      "rule": "群是沟通场所，可以同时谈多条内容、多个事项。默认项目不能直接决定每条消息的业务归属。"
+    },
+    {
+      "name": "messages",
+      "label": "消息记录",
+      "question": "谁在何时说了什么",
+      "grain": "一条来源消息一条记录。",
+      "fields": [
+        {
+          "name": "id / source_key",
+          "meaning": "内部编号与带账号范围的稳定去重键"
+        },
+        {
+          "name": "conversation_id / sender_account_id",
+          "meaning": "会话与原始发送账号；未知发送者允许为空"
+        },
+        {
+          "name": "sent_at / kind / body",
+          "meaning": "发生时间、文本/视频/文件等类型、正文或占位"
+        },
+        {
+          "name": "reply_ref / raw_metadata",
+          "meaning": "引用定位及必要原始元数据"
+        }
+      ],
+      "rule": "原消息不可被 AI 改写。视频消息可以只留占位；消息数、视频数和内容数不互相替代。群内昵称从原始元数据保留，无须先建立完整群成员管理。"
+    },
+    {
+      "name": "work_items",
+      "label": "处理事项",
+      "question": "哪件事需要有人办完",
+      "grain": "一个可描述完成条件的外部请求或内部协作事项一条记录。",
+      "fields": [
+        {
+          "name": "id / title / kind",
+          "meaning": "事项编号、要做的事；外部请求/内部协作"
+        },
+        {
+          "name": "project_id / content_id",
+          "meaning": "项目可空；同时关联内容与项目时，项目必须与内容的合作归属一致；日常内容不硬挂项目"
+        },
+        {
+          "name": "requester_id / assignee_id",
+          "meaning": "提出人可空；当前责任人可空以支持待分派"
+        },
+        {
+          "name": "status / priority",
+          "meaning": "待处理/处理中/等待对方/已解决/已取消；优先级"
+        },
+        {
+          "name": "response_due_at / completion_due_at",
+          "meaning": "外部回应时限、约定办结时限分开；均可空"
+        },
+        {
+          "name": "acceptance / evidence",
+          "meaning": "完成条件，以及少量来源消息定位"
+        },
+        {
+          "name": "created_at / resolved_at / row_version",
+          "meaning": "创建、实际解决时间与并发版本"
+        }
+      ],
+      "rule": "四个业务外键都有具体用途：项目、内容、提出人、责任人。不关联文件、文件版本、审核、发布、AI 结果等所有对象。一次事项可以有多条消息，多次回应不必重复建事项。"
+    },
+    {
+      "name": "item_notes",
+      "label": "事项处理记录",
+      "question": "这件事经过怎样的沟通和交接",
+      "grain": "一次处理说明或沟通反馈一条记录。",
+      "fields": [
+        {
+          "name": "id / item_id / author_id",
+          "meaning": "记录编号、事项、记录人"
+        },
+        {
+          "name": "kind / note / happened_at",
+          "meaning": "说明、回应、交接、解决说明等；正文与时间"
+        },
+        {
+          "name": "evidence",
+          "meaning": "关联的消息定位、必要摘录或内部操作说明"
+        }
+      ],
+      "rule": "记录围绕一个事项，不能驱动所有业务对象。改负责人、解决或重开同时更新事项并保存说明；真实字段修改前后值由运行层审计保存。"
+    }
+  ],
+  "business_actions": [
+    [
+      "建立合作",
+      "确认医生、日常或项目范围和对接人；项目合作再记录选人方式",
+      "医生合作",
+      "公司关系与项目选人分别记；日常合作无需虚构项目"
+    ],
+    [
+      "登记内容",
+      "明确一篇稿件及其内容类型、责任人",
+      "内容单",
+      "只聊选题不自动增加内容产量"
+    ],
+    [
+      "提交文案",
+      "保存文案文件，选定一个送审版本",
+      "文件 + 送审版本",
+      "文件正文改变就换版；标题变化不新建内容"
+    ],
+    [
+      "确认文案",
+      "按约定顺序收集该版本的审核意见",
+      "审核意见",
+      "按本次规则审核；既有项目示例：文案医生→企业"
+    ],
+    [
+      "收片与补录",
+      "登记收到的文件；确认哪些属于这条内容",
+      "文件 + 内容素材引用",
+      "视频条数不能代替完成稿数；未知归属可以保留"
+    ],
+    [
+      "确认素材可用",
+      "明确素材收齐且可用，并计算剪辑交片时间",
+      "内容单",
+      "按该合作已确认的交片时限；两个工作日仅用于已约定的范围"
+    ],
+    [
+      "剪辑与返工",
+      "提交确切成片版本；有修改则再次送审",
+      "送审版本 + 审核意见",
+      "按本次规则审核；既有项目示例：成片企业→医生；旧批准不自动沿用"
+    ],
+    [
+      "交付",
+      "登记接收方、文件版本、方式与时间",
+      "交付记录",
+      "终版完成须满足该内容规定的版本审核和交付要求"
+    ],
+    [
+      "发布",
+      "先登记档期，实际发出后登记平台帖子",
+      "内容单 + 平台发布",
+      "发布安排、已发布目录名均不等于实际发布"
+    ],
+    [
+      "统计与补稿",
+      "按已发布内容计算比例，再扣除在制内容",
+      "查询结果",
+      "先按内容的合作范围归集；日常产出不挪入客户项目；未知类型和未匹配发布单列"
+    ]
+  ],
+  "support_boundary": "15 张是业务与沟通表，不是整个系统表数。登录权限、同步水位、机器候选和操作审计由明确的运行支撑记录承担，见文档实现边界；这些记录同样需要持久化。",
+  "diagram_scope": "两张图合计覆盖全部15张业务与沟通表；主干外键用线表示，少量消息证据引用为服务校验的软引用，不画成数据库外键。字段为逻辑字段，不是可执行DDL。",
+  "communication_actions": [
+    {
+      "action": "消息到达",
+      "handling": "保存原消息与原始账号；尝试识别人员和项目",
+      "record": "聊天档案",
+      "boundary": "身份未知仍保存，不冒认医生或员工"
+    },
+    {
+      "action": "识别需办理的事",
+      "handling": "判断是通知、已有事项的补充，还是新的请求",
+      "record": "候选或一个处理事项",
+      "boundary": "十条消息可以只对应一个事项；一条消息也可提出两件事"
+    },
+    {
+      "action": "分派与回应",
+      "handling": "指派一名当前责任人，登记回应",
+      "record": "事项 + 处理记录",
+      "boundary": "首次回应与办结分开；“收到”不能自动判解决"
+    },
+    {
+      "action": "等待或协作",
+      "handling": "需要对方补充则等待；内部交接保留承诺和责任人",
+      "record": "事项 + 处理记录",
+      "boundary": "不默默重置原响应时间；延期需说明"
+    },
+    {
+      "action": "解决或重开",
+      "handling": "对照完成条件，登记结果和证据",
+      "record": "事项 + 处理记录",
+      "boundary": "规则不再命中、有人发言或点过按钮均不是办结证据"
+    },
+    {
+      "action": "跨入视频业务",
+      "handling": "如果请求明确涉及某内容，关联该内容",
+      "record": "事项 → 内容",
+      "boundary": "任务完成不代替版本批准、交付或实际发布"
+    }
+  ],
+  "business_domains": {
+    "合作管理": [
+      "people",
+      "projects",
+      "collaborations"
+    ],
+    "视频生产": [
+      "contents",
+      "files",
+      "content_materials",
+      "content_versions",
+      "reviews",
+      "deliveries",
+      "publications"
+    ],
+    "沟通与协作": [
+      "platform_accounts",
+      "conversations",
+      "messages",
+      "work_items",
+      "item_notes"
+    ]
+  },
+  "implementation_note": "这是逻辑模型。现有归档可承担会话和消息职责，实施前另行确定物理表、字段类型、索引、权限与迁移；不要求另建一套聊天归档。",
+  "revision_note": "v02：医生独立于项目；公司合作关系与项目选人方式分开；合作允许无项目的日常运营。共用视频生产主流程，审核、交付和统计按实际合作约定。",
+  "doctor_relationship_rules": {
+    "company_relationship": "人员上的当前公司合作关系；自有/非自有/待确认，非医生为空；不是雇佣身份。",
+    "selection_source": "项目合作上的选人方式；公司医生池/项目方指定/其他/待确认。日常合作为空。",
+    "daily_collaboration": "project_id 可空表示日常合作；明确未归属的导入候选不得冒充已确认日常合作。",
+    "content_attribution": "内容只关联确定的合作，项目由合作推导；新加入项目不重写历史内容。",
+    "workflow": "共用生产主流程；审核角色、顺序、交付规格和期限根据合作约定冻结。",
+    "permissions": "人员身份及项目指定不自动授予访问其他合作或内容的权限。",
+    "history": "公司关系与选人方式为当前值，变更留审计；历史统计依据适用合作及当时已确认记录。",
+    "uncertainty": "旧表的联盟等级/深度合作/外部合作不自动等价映射为自有分类；当前名单仍需独立确认。"
+  }
+}

@@ -1,0 +1,49 @@
+erDiagram
+  people["人员 people"] {
+    id id PK
+    text name
+  }
+  accounts["外部账号 platform_accounts"] {
+    id id PK
+    id person_id FK "可空"
+    text external_id
+  }
+  conversations["沟通场所 conversations"] {
+    id id PK
+    text name
+  }
+  messages["消息记录 messages"] {
+    id id PK
+    id conversation_id FK
+    id sender_account_id FK "可空"
+  }
+  projects["项目 projects"] {
+    id id PK
+    text name
+  }
+  contents["内容单 contents"] {
+    id id PK
+    text code
+  }
+  workItems["处理事项 work_items"] {
+    id id PK
+    id project_id FK "可空"
+    id content_id FK "可空"
+    id requester_id FK "可空"
+    id assignee_id FK "可空"
+    text status
+  }
+  itemNotes["事项处理记录 item_notes"] {
+    id id PK
+    id item_id FK
+    id author_id FK
+    text note
+  }
+  people o|..o{ accounts : "确认账号归属"
+  conversations ||..o{ messages : "包含消息"
+  accounts o|..o{ messages : "作为发送账号"
+  projects o|..o{ workItems : "项目内事项"
+  contents o|..o{ workItems : "可涉及具体内容"
+  people o|..o{ workItems : "提出人或责任人"
+  workItems ||..o{ itemNotes : "处理说明"
+  people ||..o{ itemNotes : "记录处理过程"
