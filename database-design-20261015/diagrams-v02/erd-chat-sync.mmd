@@ -1,0 +1,69 @@
+erDiagram
+    direction TB
+    people["人员 · people"] {
+        uuid id PK
+        text display_name "显示姓名"
+        json roles "已确认身份"
+        text status "人员状态"
+    }
+    platformAccounts["平台账号 · platform_accounts"] {
+        uuid id PK
+        uuid person_id FK "可空"
+        text platform "平台"
+        text namespace "账号ID范围"
+        text external_id "联合唯一键组成"
+    }
+    conversations["会话 · conversations"] {
+        uuid id PK
+        text external_id "平台会话稳定ID"
+        uuid default_engagement_id FK "可空 默认线索"
+        text kind "群聊或私聊"
+    }
+    conversationMembers["群内成员 · conversation_members"] {
+        uuid conversation_id PK, FK
+        uuid account_id PK, FK
+        text group_nickname "保留原群昵称"
+        text role_status "未知 推断 确认"
+    }
+    messages["原始消息 · messages"] {
+        bigint id PK
+        text uid UK "来源稳定去重键"
+        uuid conversation_id FK "必填"
+        uuid sender_account_id FK "可空"
+        bigint reply_to_message_id FK "引用消息 可空"
+        text message_type "视频也可只留占位"
+    }
+    messageAnalysis["机器分析 · message_analysis"] {
+        uuid id PK
+        bigint anchor_message_id FK "锚定消息"
+        text analyzer_version "规则及模型版本"
+        json suggestions "候选 不等于正式事实"
+    }
+    sourceRecords["来源当前快照 · source_records"] {
+        uuid id PK
+        text record_key "带来源范围的稳定键"
+        text content_hash "当前快照指纹"
+        json raw_payload "必要来源数据"
+    }
+    assets["文件内容版本 · assets"] {
+        uuid id PK
+        text object_id "来源对象稳定ID"
+        text revision_key "来源内容版本"
+        text revision_assurance "可靠或暂定"
+        uuid source_record_id FK "可空"
+    }
+    syncState["同步水位 · sync_state"] {
+        text pipeline PK
+        text scope_key PK "来源同步范围"
+        json cursor "成功提交后更新"
+        timestamp covered_through "实际覆盖时点"
+        text coverage "完整 部分 未知"
+    }
+    people o|..o{ platformAccounts : "账号归属"
+    conversations ||..o{ messages : "产生消息"
+    conversations ||--o{ conversationMembers : "包含成员"
+    platformAccounts ||--o{ conversationMembers : "加入会话"
+    platformAccounts o|..o{ messages : "作为发送者"
+    messages ||..o{ messageAnalysis : "分析候选"
+    sourceRecords o|..o{ assets : "文件来源"
+    messages o|..o{ messages : "引用原消息"

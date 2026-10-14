@@ -1,0 +1,108 @@
+erDiagram
+    direction TB
+    people["人员 · people"] {
+        uuid id PK
+        text display_name "显示姓名"
+        json roles "已确认身份"
+    }
+    platformAccounts["平台账号 · platform_accounts"] {
+        uuid id PK
+        uuid person_id FK "可空"
+        text platform "平台"
+    }
+    projects["项目 · projects"] {
+        uuid id PK
+        text code UK "项目编码"
+        json policy "默认业务规则"
+    }
+    engagements["医生与项目合作 · engagements"] {
+        uuid id PK
+        uuid project_id FK "必填"
+        uuid doctor_person_id FK "必填"
+    }
+    works["作品 · works"] {
+        uuid id PK
+        text code UK "稳定作品编号"
+        uuid engagement_id FK "必填"
+    }
+    assets["文件内容版本 · assets"] {
+        uuid id PK
+        text object_id "来源对象稳定ID"
+        text revision_key "来源内容版本"
+    }
+    workAssets["作品文件关联 · work_assets"] {
+        uuid id PK
+        uuid work_id FK "必填"
+        uuid asset_id FK "必填"
+    }
+    events["正式事件 · events"] {
+        uuid id PK "内部稳定事件ID"
+        text root_type "合作 作品 任务"
+        uuid engagement_id FK "三个根恰填一个"
+    }
+    eventMessages["事件聊天证据 · event_messages"] {
+        uuid event_id PK, FK
+        bigint message_id PK, FK
+        text evidence_role PK "触发 上下文 确认 冲突"
+    }
+    tasks["独立待办 · tasks"] {
+        uuid id PK
+        uuid work_id FK "可空"
+        uuid engagement_id FK "可空"
+    }
+    publications["实际发布 · publications"] {
+        uuid id PK
+        uuid platform_account_id FK "发布账号"
+        uuid work_id FK "可空 待匹配"
+    }
+    conversations["会话 · conversations"] {
+        uuid id PK
+        text external_id "平台会话稳定ID"
+        uuid default_engagement_id FK "可空 默认线索"
+    }
+    conversationMembers["群内成员 · conversation_members"] {
+        uuid conversation_id PK, FK
+        uuid account_id PK, FK
+        text group_nickname "保留原群昵称"
+    }
+    messages["原始消息 · messages"] {
+        bigint id PK
+        text uid UK "来源稳定去重键"
+        uuid conversation_id FK "必填"
+    }
+    messageAnalysis["机器分析 · message_analysis"] {
+        uuid id PK
+        bigint anchor_message_id FK "锚定消息"
+        text analyzer_version "规则及模型版本"
+    }
+    sourceRecords["来源当前快照 · source_records"] {
+        uuid id PK
+        text record_key "带来源范围的稳定键"
+        text content_hash "当前快照指纹"
+    }
+    syncState["同步水位 · sync_state"] {
+        text pipeline PK
+        text scope_key PK "来源同步范围"
+        json cursor "成功提交后更新"
+    }
+    people o|..o{ platformAccounts : "账号归属"
+    people ||..o{ engagements : "作为医生"
+    projects ||..o{ engagements : "开展合作"
+    engagements ||..o{ works : "形成作品"
+    works ||..o{ workAssets : "包含文件关联"
+    assets ||..o{ workAssets : "关联文件版本"
+    platformAccounts ||..o{ publications : "账号发布"
+    works o|..o{ publications : "匹配作品"
+    engagements o|..o{ events : "合作根对象"
+    works o|..o{ events : "作品根对象"
+    tasks o|..o{ events : "任务根对象"
+    workAssets o|..o{ events : "审核具体版本"
+    works o|..o{ tasks : "作品待办"
+    messageAnalysis o|..o{ tasks : "待人工核对"
+    events ||--o{ eventMessages : "提供事实"
+    messages ||--o{ eventMessages : "提供证据"
+    conversations ||..o{ messages : "产生消息"
+    conversations ||--o{ conversationMembers : "包含成员"
+    platformAccounts ||--o{ conversationMembers : "加入会话"
+    messages ||..o{ messageAnalysis : "分析候选"
+    sourceRecords o|..o{ assets : "文件来源"

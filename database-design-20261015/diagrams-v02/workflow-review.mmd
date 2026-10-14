@@ -1,0 +1,31 @@
+flowchart TB
+    subgraph scriptRoute["文案审核：同一确切文案版本"]
+        direction TB
+        scriptVersion["当前文案版本"] --> scriptType{"作品类型"}
+        scriptType -->|"科普"| scienceScript["医生审核"]
+        scriptType -->|"患教"| eduScript["医生通过后，再由企业审核"]
+        scienceScript --> scriptGates{"当前版本满足全部门槛？"}
+        eduScript --> scriptGates
+        scriptGates -->|"通过"| scriptReady["该文案版本审核完成，可录制"]
+        scriptGates -->|"有明确修改要求"| scriptNew["新文案版本：旧批准不沿用"]
+        scriptNew -.->|"重新开始该版本审核"| scriptVersion
+    end
+    subgraph cutRoute["成片审核：同一确切输出版本与规格"]
+        direction TB
+        cutVersion["当前成片版本"] --> cutType{"作品类型"}
+        cutType -->|"科普"| scienceCut["医生审核"]
+        cutType -->|"患教"| companyCut["企业通过后，再由医生审核"]
+        scienceCut --> cutGates{"当前版本满足全部门槛？"}
+        companyCut --> cutGates
+        cutGates -->|"通过"| cutReady["该成片版本审核完成，可交付"]
+        cutGates -->|"有明确修改要求"| cutNew["新成片版本：旧批准不沿用"]
+        cutNew -.->|"重新开始该版本审核"| cutVersion
+    end
+    style scriptRoute fill:#f0f7f6,stroke:#92b5b0
+    style cutRoute fill:#f2f5fc,stroke:#9baecc
+    classDef decision fill:#fff4dc,stroke:#ba8932,color:#6d4b15
+    classDef revision fill:#fff0ed,stroke:#c47f69,color:#713a2b
+    classDef approved fill:#dcefe3,stroke:#4f8b62,color:#244c2d
+    class scriptType,cutType,scriptGates,cutGates decision
+    class scriptNew,cutNew revision
+    class scriptReady,cutReady approved

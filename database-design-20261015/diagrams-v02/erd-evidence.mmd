@@ -1,0 +1,79 @@
+erDiagram
+    direction TB
+    engagements["医生与项目合作 · engagements"] {
+        uuid id PK
+        uuid project_id FK "必填"
+        uuid doctor_person_id FK "必填"
+        uuid owner_person_id FK "默认运营 可空"
+        bool new_script_paused "只暂停新增稿"
+        json upload_scope "云盘入口"
+    }
+    works["作品 · works"] {
+        uuid id PK
+        text code UK "稳定作品编号"
+        uuid engagement_id FK "必填"
+        text work_type "科普或患教"
+        text stage "事件计算缓存"
+        int lock_version "并发版本"
+    }
+    tasks["独立待办 · tasks"] {
+        uuid id PK
+        uuid work_id FK "可空"
+        uuid engagement_id FK "可空"
+        uuid assignee_person_id FK "可空"
+        uuid analysis_id FK "可空"
+        text kind "回复 核对 催办 动作"
+        text status "未办 进行 完成 忽略"
+    }
+    workAssets["作品文件关联 · work_assets"] {
+        uuid id PK
+        uuid work_id FK "必填"
+        uuid asset_id FK "必填"
+        text role "文案 原片 成片"
+        int version_no "业务版本"
+        text variant "输出规格"
+        text relation_state "候选 确认 拒绝"
+        uuid supersedes_link_id FK "上一版 可空"
+    }
+    events["正式事件 · events"] {
+        uuid id PK "内部稳定事件ID"
+        text root_type "合作 作品 任务"
+        uuid engagement_id FK "三个根恰填一个"
+        uuid work_id FK "三个根恰填一个"
+        uuid task_id FK "三个根恰填一个"
+        uuid work_asset_id FK "确切文件版本 可空"
+        text event_type "审核 交付 更正等"
+        text review_gate "审核角色"
+        int review_round "复审轮次"
+        text decision "通过 修改 撤回"
+    }
+    messages["原始消息 · messages"] {
+        bigint id PK
+        text uid UK "来源稳定去重键"
+        uuid conversation_id FK "必填"
+        uuid sender_account_id FK "可空"
+        bigint reply_to_message_id FK "引用消息 可空"
+        text message_type "视频也可只留占位"
+    }
+    eventMessages["事件聊天证据 · event_messages"] {
+        uuid event_id PK, FK
+        bigint message_id PK, FK
+        text evidence_role PK "触发 上下文 确认 冲突"
+    }
+    messageAnalysis["机器分析 · message_analysis"] {
+        uuid id PK
+        bigint anchor_message_id FK "锚定消息"
+        text analyzer_version "规则及模型版本"
+        json suggestions "候选 不等于正式事实"
+    }
+    engagements ||..o{ works : "形成作品"
+    works ||..o{ workAssets : "包含文件关联"
+    engagements o|..o{ events : "合作根对象"
+    works o|..o{ events : "作品根对象"
+    tasks o|..o{ events : "任务根对象"
+    workAssets o|..o{ events : "审核具体版本"
+    works o|..o{ tasks : "作品待办"
+    messageAnalysis o|..o{ tasks : "待人工核对"
+    events ||--o{ eventMessages : "提供事实"
+    messages ||--o{ eventMessages : "提供证据"
+    messages ||..o{ messageAnalysis : "分析候选"

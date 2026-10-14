@@ -1,0 +1,71 @@
+erDiagram
+    direction TB
+    projects["项目 · projects"] {
+        uuid id PK
+        text code UK "项目编码"
+        json policy "默认业务规则"
+    }
+    people["人员 · people"] {
+        uuid id PK
+        text display_name "显示姓名"
+        json roles "已确认身份"
+        text status "人员状态"
+    }
+    engagements["医生与项目合作 · engagements"] {
+        uuid id PK
+        uuid project_id FK "必填"
+        uuid doctor_person_id FK "必填"
+        uuid owner_person_id FK "默认运营 可空"
+        bool new_script_paused "只暂停新增稿"
+        json upload_scope "云盘入口"
+    }
+    works["作品 · works"] {
+        uuid id PK
+        text code UK "稳定作品编号"
+        uuid engagement_id FK "必填"
+        text work_type "科普或患教"
+        text stage "事件计算缓存"
+        int lock_version "并发版本"
+    }
+    assets["文件内容版本 · assets"] {
+        uuid id PK
+        text object_id "来源对象稳定ID"
+        text revision_key "来源内容版本"
+        text revision_assurance "可靠或暂定"
+        uuid source_record_id FK "可空"
+    }
+    workAssets["作品文件关联 · work_assets"] {
+        uuid id PK
+        uuid work_id FK "必填"
+        uuid asset_id FK "必填"
+        text role "文案 原片 成片"
+        int version_no "业务版本"
+        text variant "输出规格"
+        text relation_state "候选 确认 拒绝"
+        uuid supersedes_link_id FK "上一版 可空"
+    }
+    platformAccounts["平台账号 · platform_accounts"] {
+        uuid id PK
+        uuid person_id FK "可空"
+        text platform "平台"
+        text namespace "账号ID范围"
+        text external_id "联合唯一键组成"
+    }
+    publications["实际发布 · publications"] {
+        uuid id PK
+        uuid platform_account_id FK "发布账号"
+        uuid work_id FK "可空 待匹配"
+        uuid work_asset_id FK "可空 精确版本"
+        text external_id "平台内容ID"
+        timestamp published_at "实际发布时间"
+    }
+    people o|..o{ platformAccounts : "账号归属"
+    people ||..o{ engagements : "作为医生"
+    projects ||..o{ engagements : "开展合作"
+    engagements ||..o{ works : "形成作品"
+    works ||..o{ workAssets : "包含文件关联"
+    assets ||..o{ workAssets : "关联文件版本"
+    platformAccounts ||..o{ publications : "账号发布"
+    works o|..o{ publications : "匹配作品"
+    workAssets o|..o{ publications : "匹配精确版本"
+    workAssets o|..o{ workAssets : "替代上一业务版本"
