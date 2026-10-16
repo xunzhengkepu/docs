@@ -1,0 +1,61 @@
+erDiagram
+    people ||--o| doctors : "医生身份"
+    people ||--o| employees : "员工身份"
+    people ||--o{ company_contacts : "公司人员身份"
+    companies ||--o{ company_contacts : "公司"
+    doctors ||--o{ doctor_companies : "合作医生"
+    companies ||--o{ doctor_companies : "合作公司"
+    projects ||--o{ project_companies : "项目"
+    companies ||--o{ project_companies : "公司"
+    projects ||--o{ project_people : "参与项目"
+    people ||--o{ project_people : "参与人"
+    people["人员 · people"] {
+        UUID id PK
+        text name
+        text wechat_id
+        text wechat_label
+    }
+    doctors["医生 · doctors"] {
+        UUID person_id PK,FK
+        text display_name
+        bigint follower_count
+        bigint published_video_count
+        text stats_platform
+        datetime stats_updated_at
+    }
+    employees["员工 · employees"] {
+        UUID person_id PK,FK
+        textList work_roles
+        boolean is_active
+    }
+    company_contacts["公司人员 · company_contacts"] {
+        UUID id PK
+        UUID person_id FK
+        UUID company_id FK
+        text role
+    }
+    companies["公司 · companies"] {
+        UUID id PK
+        text name
+    }
+    doctor_companies["医生与公司 · doctor_companies"] {
+        UUID doctor_id PK,FK
+        UUID company_id PK,FK
+        text relationship
+    }
+    projects["项目 · projects"] {
+        UUID id PK
+        text name
+        text requirements
+        text source_message_uid
+    }
+    project_companies["项目与公司 · project_companies"] {
+        UUID project_id PK,FK
+        UUID company_id PK,FK
+        text role
+    }
+    project_people["项目参与人 · project_people"] {
+        UUID project_id PK,FK
+        UUID person_id PK,FK
+        textList roles
+    }

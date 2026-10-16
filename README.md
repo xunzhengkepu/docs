@@ -9,8 +9,9 @@
 
 ## 当前正式版本
 
-- [科普麦子数据结构与业务结构：微信收片、人工确认（2026-10-16 v01）](./business-first-model-20261016/maizi-business-first-database-20261016-v01.html)
-- [上述设计的完整 Mermaid 文档与源码](./business-first-model-20261016/maizi-business-first-database-20261016-v01.md)
+- [task 核心数据库 ERD 与逐字段含义（2026-10-17 v01）](./task-model-20261017/maizi-task-database-20261017-v01.html)
+- [task 数据库 Mermaid 与完整字段源码文档](./task-model-20261017/maizi-task-database-20261017-v01.md)
+
 - [三位医生视频流程核对·公开脱敏版（2026-10-14 v01）](./doctor-video-audit-20261014/maizi-doctor-video-audit-redacted-20261014-v01.html)
 - [20个微信群视频转换可判定性分析（2026-10-10 v01）](./video-feasibility-20261010/maizi-20-group-video-conversion-analysis-20261010-v01.html)
 - [微信聊天判断视频流程可行性分析（2026-10-09 v02）](./video-feasibility-20261009/maizi-video-message-feasibility-20261009-v02.md)
@@ -24,6 +25,9 @@
 - [AI 健康项目架构图](./ai-health-mermaid-strucutre.html)
 
 ## 历史正式版本
+
+- [科普麦子数据结构与业务结构：微信收片、人工确认（2026-10-16 v01）](./business-first-model-20261016/maizi-business-first-database-20261016-v01.html)
+- [上述设计的完整 Mermaid 文档与源码](./business-first-model-20261016/maizi-business-first-database-20261016-v01.md)
 
 - [科普麦子业务设计：人工改状态、云盘收片与灵活审核（2026-10-15 v04）](./business-first-model-20261015/maizi-business-first-database-20261015-v04.html)
 

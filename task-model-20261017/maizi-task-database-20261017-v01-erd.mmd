@@ -1,0 +1,129 @@
+erDiagram
+    people ||--o| doctors : "医生身份"
+    people ||--o| employees : "员工身份"
+    people ||--o{ company_contacts : "公司人员身份"
+    companies ||--o{ company_contacts : "公司"
+    doctors ||--o{ doctor_companies : "合作医生"
+    companies ||--o{ doctor_companies : "合作公司"
+    projects ||--o{ project_companies : "项目"
+    companies ||--o{ project_companies : "公司"
+    projects ||--o{ project_people : "参与项目"
+    people ||--o{ project_people : "参与人"
+    doctors o|--o{ tasks : "服务医生可待核实"
+    projects o|--o{ tasks : "可属项目"
+    employees o|--o{ tasks : "文案负责人"
+    employees o|--o{ tasks : "剪辑负责人"
+    employees o|--o{ tasks : "运营负责人"
+    people o|--o{ tasks : "最后人工更新人"
+    tasks o|--o{ videos : "视频归属可待核实"
+    tasks o|--o{ files : "文件归属可待核实"
+    tasks ||--o{ publications : "发布安排与结果"
+    videos o|--o{ publications : "发布版本可未知"
+    people o|--o{ publications : "人工确认人"
+    people["人员 · people"] {
+        UUID id PK
+        text name
+        text wechat_id
+        text wechat_label
+    }
+    doctors["医生 · doctors"] {
+        UUID person_id PK,FK
+        text display_name
+        bigint follower_count
+        bigint published_video_count
+        text stats_platform
+        datetime stats_updated_at
+    }
+    employees["员工 · employees"] {
+        UUID person_id PK,FK
+        textList work_roles
+        boolean is_active
+    }
+    company_contacts["公司人员 · company_contacts"] {
+        UUID id PK
+        UUID person_id FK
+        UUID company_id FK
+        text role
+    }
+    companies["公司 · companies"] {
+        UUID id PK
+        text name
+    }
+    doctor_companies["医生与公司 · doctor_companies"] {
+        UUID doctor_id PK,FK
+        UUID company_id PK,FK
+        text relationship
+    }
+    projects["项目 · projects"] {
+        UUID id PK
+        text name
+        text requirements
+        text source_message_uid
+    }
+    project_companies["项目与公司 · project_companies"] {
+        UUID project_id PK,FK
+        UUID company_id PK,FK
+        text role
+    }
+    project_people["项目参与人 · project_people"] {
+        UUID project_id PK,FK
+        UUID person_id PK,FK
+        textList roles
+    }
+    tasks["制作任务 · tasks"] {
+        UUID id PK
+        text title
+        UUID doctor_id FK
+        UUID project_id FK
+        text content_type
+        text status
+        UUID writer_id FK
+        UUID editor_id FK
+        UUID operator_id FK
+        datetime planned_publish_at
+        text note
+        text source_message_uid
+        text status_source
+        text status_message_uid
+        UUID updated_by FK
+        datetime created_at
+        datetime updated_at
+    }
+    videos["视频文件 · videos"] {
+        UUID id PK
+        UUID task_id FK
+        text source_message_uid
+        text storage_path
+        text download_status
+        text sha256
+        text original_filename
+        text kind
+        bigint size_bytes
+        bigint duration_ms
+        text source_md5
+    }
+    files["其他文件 · files"] {
+        UUID id PK
+        UUID task_id FK
+        text source_message_uid
+        text storage_path
+        text download_status
+        text sha256
+        text filename
+        text kind
+        text external_url
+    }
+    publications["发布安排与结果 · publications"] {
+        UUID id PK
+        UUID task_id FK
+        UUID video_id FK
+        text platform
+        text status
+        datetime scheduled_at
+        datetime published_at
+        text url
+        text platform_video_id
+        text source_message_uid
+        UUID confirmed_by FK
+        datetime confirmed_at
+    }

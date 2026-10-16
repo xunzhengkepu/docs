@@ -1,0 +1,62 @@
+erDiagram
+    tasks o|--o{ videos : "视频归属可待核实"
+    tasks o|--o{ files : "文件归属可待核实"
+    tasks ||--o{ publications : "发布安排与结果"
+    videos o|--o{ publications : "发布版本可未知"
+    tasks["制作任务 · tasks"] {
+        UUID id PK
+        text title
+        UUID doctor_id FK
+        UUID project_id FK
+        text content_type
+        text status
+        UUID writer_id FK
+        UUID editor_id FK
+        UUID operator_id FK
+        datetime planned_publish_at
+        text note
+        text source_message_uid
+        text status_source
+        text status_message_uid
+        UUID updated_by FK
+        datetime created_at
+        datetime updated_at
+    }
+    videos["视频文件 · videos"] {
+        UUID id PK
+        UUID task_id FK
+        text source_message_uid
+        text storage_path
+        text download_status
+        text sha256
+        text original_filename
+        text kind
+        bigint size_bytes
+        bigint duration_ms
+        text source_md5
+    }
+    files["其他文件 · files"] {
+        UUID id PK
+        UUID task_id FK
+        text source_message_uid
+        text storage_path
+        text download_status
+        text sha256
+        text filename
+        text kind
+        text external_url
+    }
+    publications["发布安排与结果 · publications"] {
+        UUID id PK
+        UUID task_id FK
+        UUID video_id FK
+        text platform
+        text status
+        datetime scheduled_at
+        datetime published_at
+        text url
+        text platform_video_id
+        text source_message_uid
+        UUID confirmed_by FK
+        datetime confirmed_at
+    }
