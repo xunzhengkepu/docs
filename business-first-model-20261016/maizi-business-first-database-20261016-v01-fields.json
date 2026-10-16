@@ -1,0 +1,84 @@
+{
+  "version": "2026-10-16-v01",
+  "tables": [
+    {
+      "name": "people",
+      "label": "人员",
+      "row": "一个人",
+      "fields": "id PK；name；roles（可多身份）；wechat_id 可空且已知值唯一；wechat_label 可空"
+    },
+    {
+      "name": "companies",
+      "label": "公司",
+      "row": "一家公司",
+      "fields": "id PK；name"
+    },
+    {
+      "name": "projects",
+      "label": "项目",
+      "row": "一个合作项目",
+      "fields": "id PK；name；requirements 合作约定"
+    },
+    {
+      "name": "people_companies",
+      "label": "人员与公司",
+      "row": "一个人与一家公司的关系",
+      "fields": "person_id + company_id 组合主键及外键；relationship"
+    },
+    {
+      "name": "project_companies",
+      "label": "项目与公司",
+      "row": "一个项目与一家公司的关系",
+      "fields": "project_id + company_id 组合主键及外键；role"
+    },
+    {
+      "name": "project_people",
+      "label": "项目参与人",
+      "row": "一个人在这个项目里的分工",
+      "fields": "project_id + person_id 组合主键及外键；roles（可多个）"
+    },
+    {
+      "name": "videos",
+      "label": "视频",
+      "row": "一条明确安排制作的视频，可以还没有初稿",
+      "fields": "id PK；title 可用暂定题目；doctor_id FK；project_id FK 可空；owner_id FK 可空；content_type 科普/患教/其他；current_status 当前确认进度；status_revision 状态版本号；planned_publish_at 计划发布时间可空；due_at 交付期限可空；evidence_status 证据完整度；required_platforms 约定发布平台；source_ref 建档依据"
+    },
+    {
+      "name": "status_changes",
+      "label": "状态修改历史",
+      "row": "一次已经生效的状态修改",
+      "fields": "id PK；video_id FK；from_status；to_status；revision；actor_id FK 可空；actor_type 人员/导入；source 手工/建议采纳/历史导入；changed_at 平台修改时间；occurred_at 业务实际发生时间可空；note 可空；evidence_refs 可空"
+    },
+    {
+      "name": "files",
+      "label": "文件与版本",
+      "row": "一份通过微信收到的文件或具体版本",
+      "fields": "id PK；video_id FK 可空；kind 大纲/脚本/原片/成片/发布文案/封面/待分类；version_label；source_message_uids 来源微信消息列表；cache_path 微信缓存位置可空；archive_path 平台归档位置可空；size_bytes；source_md5 可空；sha256 获取文件后计算；received_at；downloaded_at 可空；download_status 待下载/下载中/已下载/失败/文件缺失；availability 待检查/可用/需补录或重传；checked_by FK 可空；checked_at 可空"
+    },
+    {
+      "name": "reviews",
+      "label": "审核与确认",
+      "row": "一个具体审核对象的一项确认要求及结果",
+      "fields": "id PK；video_id FK；file_id FK 可空；round_no；reviewer_id FK 可空；reviewer_role 医生/客户/内部；order_group 可空，同组可同时审核；required 是否必要；result 待确认/通过/要修改/已撤销；comment；responded_at 可空；recorded_by FK 可空；source_ref 可空"
+    },
+    {
+      "name": "deliveries",
+      "label": "交付",
+      "row": "把某版成片交给一个接收人",
+      "fields": "id PK；file_id FK；recipient_id FK；delivered_at；recorded_by FK；source_ref 可空"
+    },
+    {
+      "name": "publications",
+      "label": "定时与发布",
+      "row": "一条视频在某平台的一次发布安排或实际发布",
+      "fields": "id PK；video_id FK；file_id FK 可空；platform；status 待安排/已定时/已发布/已取消/已下架；scheduled_at 可空；published_at 可空；url 可空；confirmed_by FK 可空；confirmed_at 可空；evidence_status；source_ref 可空"
+    },
+    {
+      "name": "todos",
+      "label": "待办与系统建议",
+      "row": "一件待处理的事情，或一条尚未采纳的状态建议",
+      "fields": "id PK；kind 普通待办/状态建议；description；assignee_id FK 可空；requester_id FK 可空；video_id FK 可空；project_id FK 可空；status 待处理/完成/驳回/过期；done_when；due_at 可空；completed_at 可空；resolved_by FK 可空；proposed_status 可空；based_on_revision 可空；source_ref 可空"
+    }
+  ],
+  "table_count": 13
+}

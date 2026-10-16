@@ -1,0 +1,382 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>麦子工作台 2026-10-16 v01 · 人工确认与自动辅助</title><style>
+body{margin:0;background:#f3f6fa;color:#203247;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1240px;margin:auto;padding:40px 24px}h1{font-size:36px;line-height:1.3}h2{margin-top:48px}h3{margin-top:0}a{color:#096c80}section,.hero{background:white;padding:26px;border-radius:16px;margin:22px 0}nav{display:flex;gap:20px;flex-wrap:wrap}.tag{font-weight:bold;color:#096c80}.hero{border-left:6px solid #0d8d88}.diagram{overflow:auto;background:#fff}.diagram img{display:block;width:100%;height:auto}.flow img{max-width:850px;margin:auto}table{width:100%;border-collapse:collapse}td,th{padding:14px;text-align:left;border-bottom:1px solid #dbe3ea;vertical-align:top}th{background:#edf4f7}code{font-size:13px}pre{white-space:pre-wrap;font-size:12px}summary{cursor:pointer}li{margin:10px 0}.tablewrap{overflow:auto}.muted{color:#53687b} @media(max-width:700px){main{padding:20px 12px}section{padding:16px}h1{font-size:28px}td{min-width:140px}}</style><main>
+<div class="tag">2026-10-16 · v01 · 设计讨论稿</div><h1>系统帮忙整理，人能确认和推进</h1><p class="muted">根据本轮业务讨论、内部聊天与飞书修改历史抽查，以及微信本地下载代码核查修订。本文仅展示业务规则，不发布聊天原文、人员案例或内部数据。尚未实施数据库迁移或扩展下载范围。现有下载处理配置仅覆盖一个群，不代表全量群聊已接通。</p>
+<p><a href="maizi-business-first-database-20261016-v01.md">查看全部 Mermaid 文档</a></p><nav><a href="#changes">本版改了什么</a><a href="#erd">ERD</a><a href="#flow">业务流程</a><a href="#control">状态怎么改</a><a href="#tables">字段目录</a><a href="#rules">规则与边界</a></nav>
+<div class="hero"><b>人工修改状态是核心功能。</b><br>员工可以直接确认待发布、已定时、已发布，也可以跳过中间步骤或退回。微信消息和本地文件提供事实与建议，不擅自覆盖人工确认。缺证据另标待补，不把已完成自动退回。</div>
+<h2 id="changes">01 / 这次具体改了什么</h2><section><ul>
+<li><b>人员仍只有 people 一张表。</b>微信 ID 放在人上；不加入职日期、医院科室或独立账号表。</li>
+<li><b>继续保留 13 张逻辑表。</b>相对上一版不新增表，调整文件来源与下载字段。系统建议复用待办表，不再另建消息分析或通用事件系统。</li>
+<li><b>初稿前也能建视频。</b>有明确的一条视频需求或档期就可以建；泛泛的选题想法和每周更新频率不自动生成视频。</li>
+<li><b>审核既能记待确认，也能记结果。</b>医生、客户、内部可先后或同步；历史没有逐版本记录，不否认员工已确认的进度。</li>
+<li><b>微信与本地下载提供收片事实。</b>收到消息、文件下载完整、素材可用、剪辑完成、审核通过是不同判断。下载成功不自动推进主状态。</li>
+<li><b>已定时与已发布分开。</b>发布后要交后台数据等，单列待办，不把整条视频一直留在未完成。</li>
+</ul></section>
+<h2 id="erd">02 / ERD 数据库关系图</h2><p>先看两张分图，再看总图。PK 是记录编号或组合主键，FK 是关联编号；圈表示可空，分叉表示可多条。分图省略部分跨区关系，总图完整展示。</p>
+<section><h3>人员、公司与项目</h3><p><a href="maizi-business-first-database-20261016-v01-relations.svg" target="_blank">打开大图／放大</a> · <a href="maizi-business-first-database-20261016-v01-relations.mmd" download>Mermaid 源码</a></p><div class="diagram relations"><img src="maizi-business-first-database-20261016-v01-relations.svg" alt="人员、公司与项目"></div><details><summary>查看源码</summary><pre>erDiagram
+    people ||--o{ people_companies : &quot;人员&quot;
+    companies ||--o{ people_companies : &quot;公司&quot;
+    projects ||--o{ project_companies : &quot;项目&quot;
+    companies ||--o{ project_companies : &quot;合作方&quot;
+    projects ||--o{ project_people : &quot;项目&quot;
+    people ||--o{ project_people : &quot;参与人&quot;
+    people ||--o{ videos : &quot;医生&quot;
+    people o|--o{ videos : &quot;总负责人可空&quot;
+    projects o|--o{ videos : &quot;项目可空&quot;
+    people[&quot;人员 · people&quot;] {
+        string id PK
+        string name
+        string roles
+        string wechat_id
+    }
+    companies[&quot;公司 · companies&quot;] {
+        string id PK
+        string name
+    }
+    projects[&quot;项目 · projects&quot;] {
+        string id PK
+        string name
+        string requirements
+    }
+    people_companies[&quot;人员与公司 · people_companies&quot;] {
+        string person_id PK,FK
+        string company_id PK,FK
+        string relationship
+    }
+    project_companies[&quot;项目与公司 · project_companies&quot;] {
+        string project_id PK,FK
+        string company_id PK,FK
+        string role
+    }
+    project_people[&quot;项目参与人 · project_people&quot;] {
+        string project_id PK,FK
+        string person_id PK,FK
+        string roles
+    }
+    videos[&quot;视频 · videos&quot;] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string content_type
+        string current_status
+        int status_revision
+        datetime planned_publish_at
+        string evidence_status
+    }
+</pre></details></section><section><h3>视频、审核、发布与状态历史</h3><p><a href="maizi-business-first-database-20261016-v01-production.svg" target="_blank">打开大图／放大</a> · <a href="maizi-business-first-database-20261016-v01-production.mmd" download>Mermaid 源码</a></p><div class="diagram production"><img src="maizi-business-first-database-20261016-v01-production.svg" alt="视频、审核、发布与状态历史"></div><details><summary>查看源码</summary><pre>erDiagram
+    videos ||--o{ status_changes : &quot;已生效修改&quot;
+    videos o|--o{ files : &quot;归属可待核实&quot;
+    videos ||--o{ reviews : &quot;审核要求&quot;
+    files o|--o{ reviews : &quot;具体版本可待补&quot;
+    files ||--o{ deliveries : &quot;交付版本&quot;
+    videos ||--o{ publications : &quot;定时及发布&quot;
+    files o|--o{ publications : &quot;发布版本可待补&quot;
+    videos o|--o{ todos : &quot;关联视频可空&quot;
+    videos[&quot;视频 · videos&quot;] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string content_type
+        string current_status
+        int status_revision
+        datetime planned_publish_at
+        string evidence_status
+    }
+    status_changes[&quot;状态修改历史 · status_changes&quot;] {
+        string id PK
+        string video_id FK
+        string actor_id FK
+        string from_status
+        string to_status
+        int revision
+        datetime changed_at
+        string source
+    }
+    files[&quot;文件与版本 · files&quot;] {
+        string id PK
+        string video_id FK
+        string checked_by FK
+        string kind
+        string version_label
+        string source_message_uids
+        string archive_path
+        string sha256
+        string download_status
+        string availability
+    }
+    reviews[&quot;审核与确认 · reviews&quot;] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string reviewer_id FK
+        string recorded_by FK
+        int round_no
+        int order_group
+        boolean required
+        string result
+    }
+    deliveries[&quot;交付 · deliveries&quot;] {
+        string id PK
+        string file_id FK
+        string recipient_id FK
+        string recorded_by FK
+        datetime delivered_at
+    }
+    publications[&quot;定时与发布 · publications&quot;] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string confirmed_by FK
+        string platform
+        string status
+        datetime scheduled_at
+        datetime published_at
+        string url
+    }
+    todos[&quot;待办与系统建议 · todos&quot;] {
+        string id PK
+        string video_id FK
+        string project_id FK
+        string assignee_id FK
+        string requester_id FK
+        string resolved_by FK
+        string kind
+        string status
+        string proposed_status
+        int based_on_revision
+    }
+</pre></details></section><details><summary>展开 13 张表完整 ERD</summary><section><h3>完整 ERD</h3><p><a href="maizi-business-first-database-20261016-v01-erd.svg" target="_blank">打开大图／放大</a> · <a href="maizi-business-first-database-20261016-v01-erd.mmd" download>Mermaid 源码</a></p><div class="diagram erd"><img src="maizi-business-first-database-20261016-v01-erd.svg" alt="完整 ERD"></div><details><summary>查看源码</summary><pre>erDiagram
+    people ||--o{ people_companies : &quot;人员&quot;
+    companies ||--o{ people_companies : &quot;公司&quot;
+    projects ||--o{ project_companies : &quot;项目&quot;
+    companies ||--o{ project_companies : &quot;合作方&quot;
+    projects ||--o{ project_people : &quot;项目&quot;
+    people ||--o{ project_people : &quot;参与人&quot;
+    people ||--o{ videos : &quot;医生&quot;
+    people o|--o{ videos : &quot;总负责人可空&quot;
+    projects o|--o{ videos : &quot;项目可空&quot;
+    videos ||--o{ status_changes : &quot;已生效修改&quot;
+    people o|--o{ status_changes : &quot;修改人&quot;
+    videos o|--o{ files : &quot;归属可待核实&quot;
+    people o|--o{ files : &quot;检查人&quot;
+    videos ||--o{ reviews : &quot;审核要求&quot;
+    files o|--o{ reviews : &quot;具体版本可待补&quot;
+    people o|--o{ reviews : &quot;审核人&quot;
+    people o|--o{ reviews : &quot;确认记录人&quot;
+    files ||--o{ deliveries : &quot;交付版本&quot;
+    people ||--o{ deliveries : &quot;接收人&quot;
+    people ||--o{ deliveries : &quot;记录人&quot;
+    videos ||--o{ publications : &quot;定时及发布&quot;
+    files o|--o{ publications : &quot;发布版本可待补&quot;
+    people o|--o{ publications : &quot;确认人&quot;
+    videos o|--o{ todos : &quot;关联视频可空&quot;
+    projects o|--o{ todos : &quot;关联项目可空&quot;
+    people o|--o{ todos : &quot;负责人&quot;
+    people o|--o{ todos : &quot;提出人&quot;
+    people o|--o{ todos : &quot;处理人&quot;
+    people[&quot;人员 · people&quot;] {
+        string id PK
+        string name
+        string roles
+        string wechat_id
+    }
+    companies[&quot;公司 · companies&quot;] {
+        string id PK
+        string name
+    }
+    projects[&quot;项目 · projects&quot;] {
+        string id PK
+        string name
+        string requirements
+    }
+    people_companies[&quot;人员与公司 · people_companies&quot;] {
+        string person_id PK,FK
+        string company_id PK,FK
+        string relationship
+    }
+    project_companies[&quot;项目与公司 · project_companies&quot;] {
+        string project_id PK,FK
+        string company_id PK,FK
+        string role
+    }
+    project_people[&quot;项目参与人 · project_people&quot;] {
+        string project_id PK,FK
+        string person_id PK,FK
+        string roles
+    }
+    videos[&quot;视频 · videos&quot;] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string content_type
+        string current_status
+        int status_revision
+        datetime planned_publish_at
+        string evidence_status
+    }
+    status_changes[&quot;状态修改历史 · status_changes&quot;] {
+        string id PK
+        string video_id FK
+        string actor_id FK
+        string from_status
+        string to_status
+        int revision
+        datetime changed_at
+        string source
+    }
+    files[&quot;文件与版本 · files&quot;] {
+        string id PK
+        string video_id FK
+        string checked_by FK
+        string kind
+        string version_label
+        string source_message_uids
+        string archive_path
+        string sha256
+        string download_status
+        string availability
+    }
+    reviews[&quot;审核与确认 · reviews&quot;] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string reviewer_id FK
+        string recorded_by FK
+        int round_no
+        int order_group
+        boolean required
+        string result
+    }
+    deliveries[&quot;交付 · deliveries&quot;] {
+        string id PK
+        string file_id FK
+        string recipient_id FK
+        string recorded_by FK
+        datetime delivered_at
+    }
+    publications[&quot;定时与发布 · publications&quot;] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string confirmed_by FK
+        string platform
+        string status
+        datetime scheduled_at
+        datetime published_at
+        string url
+    }
+    todos[&quot;待办与系统建议 · todos&quot;] {
+        string id PK
+        string video_id FK
+        string project_id FK
+        string assignee_id FK
+        string requester_id FK
+        string resolved_by FK
+        string kind
+        string status
+        string proposed_status
+        int based_on_revision
+    }
+</pre></details></section></details>
+<h2 id="flow">03 / 常见业务路径</h2><p>沿用“单条视频主线”的业务骨架：需求与档期、文案、录制、剪辑、审核、交付、发布与按需效果跟进。审核可先后或同步，具体节点可按合作要求跳过。</p><p>这是业务如何发生，不是要求员工逐个按钮打卡。某些视频没有大纲、客户审核或单独交付环节，按实际合作跳过；返工可回到相应环节。</p><section><h3>视频业务逻辑图</h3><p><a href="maizi-business-first-database-20261016-v01-flow.svg" target="_blank">打开大图／放大</a> · <a href="maizi-business-first-database-20261016-v01-flow.mmd" download>Mermaid 源码</a></p><div class="diagram flow"><img src="maizi-business-first-database-20261016-v01-flow.svg" alt="视频业务逻辑图"></div><details><summary>查看源码</summary><pre>flowchart TD
+ a[&quot;明确要做一条视频：需求、档期或初稿&quot;] --&gt; b[&quot;建立同一条视频记录&quot;]
+ b --&gt; c[&quot;选题、大纲或脚本准备&quot;]
+ c --&gt; d[&quot;按本次要求安排审核人&quot;]
+ d --&gt; e[&quot;医生、客户、内部审核：可先后或同步&quot;]
+ e --&gt; f{&quot;本轮是否确认可以录制&quot;}
+ f --&gt;|需要改| c
+ f --&gt;|确认| g[&quot;医生录制，在微信发送原片&quot;]
+ g --&gt; h[&quot;自动下载并校验；能匹配的关联视频&quot;]
+ h --&gt; i[&quot;剪辑检查素材是否够用&quot;]
+ i --&gt;|缺片段或不可用| j[&quot;待办：补录或重传&quot;]
+ j --&gt; g
+ i --&gt;|可开始| k[&quot;剪辑制作，在微信发送成片版本&quot;]
+ k --&gt; l[&quot;按本次要求审片；新版本重新确认&quot;]
+ l --&gt;|需要改| k
+ l --&gt;|确认| m[&quot;员工确认待发布；按约定交付终版&quot;]
+ m --&gt; n{&quot;实际怎么发布&quot;}
+ n --&gt;|设置了定时| o[&quot;员工记录已定时及定时时间&quot;]
+ o --&gt; p[&quot;实际发布后，员工记录已发布&quot;]
+ n --&gt;|直接发布| p
+ p --&gt; q[&quot;发布链接或时间暂缺：单独标待补&quot;]
+ p --&gt; r[&quot;视频制作发布完成&quot;]
+ r -.-&gt;|合作需要时| s[&quot;独立待办：提交后台数据等&quot;]
+ s --&gt; t[&quot;办完后关闭待办，视频仍为已发布&quot;]
+ u[&quot;这是常见业务路径，不是必须逐格点击的闸门&quot;] -.-&gt; b
+ u -.-&gt; m
+</pre></details></section>
+<h2 id="control">04 / 微信、本地下载、人工如何一起工作</h2><section><h3>状态修改与自动建议逻辑图</h3><p><a href="maizi-business-first-database-20261016-v01-control.svg" target="_blank">打开大图／放大</a> · <a href="maizi-business-first-database-20261016-v01-control.mmd" download>Mermaid 源码</a></p><div class="diagram control"><img src="maizi-business-first-database-20261016-v01-control.svg" alt="状态修改与自动建议逻辑图"></div><details><summary>查看源码</summary><pre>flowchart TD
+ a[&quot;微信消息、本地下载文件&quot;] --&gt; b[&quot;保存事实和来源&quot;]
+ b --&gt; c{&quot;是否能判断具体视频和进度&quot;}
+ c --&gt;|能| d[&quot;形成状态建议，不改当前状态&quot;]
+ c --&gt;|不确定| e[&quot;保留未匹配事实，需要时待核实&quot;]
+ d --&gt; f{&quot;员工处理建议&quot;}
+ f --&gt;|驳回| g[&quot;关闭建议，状态不变&quot;]
+ f --&gt;|采纳| h[&quot;检查状态版本，防止旧建议覆盖新修改&quot;]
+ h --&gt;|已变化| i[&quot;建议过期，重新核对&quot;]
+ h --&gt;|仍一致| j[&quot;提交状态修改&quot;]
+ k[&quot;员工直接选状态：允许跳步、退回&quot;] --&gt; j
+ j --&gt; l[&quot;同一次保存：更新当前状态并追加修改历史&quot;]
+ l --&gt; m[&quot;保存谁、何时、从哪改到哪、来源&quot;]
+ l --&gt; n[&quot;缺链接或版本只标证据待补，不自动退回&quot;]
+</pre></details></section>
+<section><h3>微信自动下载与文件归属逻辑图</h3><p><a href="maizi-business-first-database-20261016-v01-intake.svg" target="_blank">打开大图／放大</a> · <a href="maizi-business-first-database-20261016-v01-intake.mmd" download>Mermaid 源码</a></p><div class="diagram intake"><img src="maizi-business-first-database-20261016-v01-intake.svg" alt="微信自动下载与文件归属逻辑图"></div><details><summary>查看源码</summary><pre>flowchart TD
+ a[&quot;微信收到视频消息&quot;] --&gt; b[&quot;保存稳定消息 uid，登记待下载&quot;]
+ b --&gt; c[&quot;扫描微信本地视频目录&quot;]
+ c --&gt; d{&quot;完整视频已落盘并通过校验吗&quot;}
+ d --&gt;|还没有或失败| e[&quot;等待或重试，下载状态单独记录&quot;]
+ e --&gt; c
+ d --&gt;|通过| f[&quot;生成文件编号，计算哈希并归档&quot;]
+ f --&gt; g{&quot;能确定视频归属及文件类型吗&quot;}
+ g --&gt;|不能| h[&quot;保留待分类或待关联，员工核对&quot;]
+ h --&gt; i[&quot;关联同一条视频记录&quot;]
+ g --&gt;|能| i
+ i --&gt; j{&quot;文件类型&quot;}
+ j --&gt;|原片| k[&quot;人工检查可用性及是否收齐&quot;]
+ k --&gt;|缺内容或不可用| l[&quot;补录或重传待办&quot;]
+ l --&gt; a
+ k --&gt;|可开始剪| m[&quot;建议待剪辑，员工确认或直接开剪&quot;]
+ j --&gt;|成片| n[&quot;记录成片版本，建议待审片&quot;]
+ j --&gt;|参考或其他| o[&quot;只存资料，不推进主状态&quot;]
+ m --&gt; p[&quot;当前业务状态由员工确认；修改留历史&quot;]
+ n --&gt; p
+</pre></details></section><h2 id="tables">05 / 每张表记什么</h2><p>10 张主记录表 + 3 张关系表。图中只列主要字段，下面给出完整业务字段建议；通用创建时间等工程字段实施时补充。<a href="maizi-business-first-database-20261016-v01-fields.json" download>下载字段目录 JSON</a></p><section class="tablewrap"><table><thead><tr><th>表</th><th>一行代表什么</th><th>建议字段</th></tr></thead><tbody><tr><td><b>人员</b><br><code>people</code></td><td>一个人</td><td>id PK；name；roles（可多身份）；wechat_id 可空且已知值唯一；wechat_label 可空</td></tr><tr><td><b>公司</b><br><code>companies</code></td><td>一家公司</td><td>id PK；name</td></tr><tr><td><b>项目</b><br><code>projects</code></td><td>一个合作项目</td><td>id PK；name；requirements 合作约定</td></tr><tr><td><b>人员与公司</b><br><code>people_companies</code></td><td>一个人与一家公司的关系</td><td>person_id + company_id 组合主键及外键；relationship</td></tr><tr><td><b>项目与公司</b><br><code>project_companies</code></td><td>一个项目与一家公司的关系</td><td>project_id + company_id 组合主键及外键；role</td></tr><tr><td><b>项目参与人</b><br><code>project_people</code></td><td>一个人在这个项目里的分工</td><td>project_id + person_id 组合主键及外键；roles（可多个）</td></tr><tr><td><b>视频</b><br><code>videos</code></td><td>一条明确安排制作的视频，可以还没有初稿</td><td>id PK；title 可用暂定题目；doctor_id FK；project_id FK 可空；owner_id FK 可空；content_type 科普/患教/其他；current_status 当前确认进度；status_revision 状态版本号；planned_publish_at 计划发布时间可空；due_at 交付期限可空；evidence_status 证据完整度；required_platforms 约定发布平台；source_ref 建档依据</td></tr><tr><td><b>状态修改历史</b><br><code>status_changes</code></td><td>一次已经生效的状态修改</td><td>id PK；video_id FK；from_status；to_status；revision；actor_id FK 可空；actor_type 人员/导入；source 手工/建议采纳/历史导入；changed_at 平台修改时间；occurred_at 业务实际发生时间可空；note 可空；evidence_refs 可空</td></tr><tr><td><b>文件与版本</b><br><code>files</code></td><td>一份通过微信收到的文件或具体版本</td><td>id PK；video_id FK 可空；kind 大纲/脚本/原片/成片/发布文案/封面/待分类；version_label；source_message_uids 来源微信消息列表；cache_path 微信缓存位置可空；archive_path 平台归档位置可空；size_bytes；source_md5 可空；sha256 获取文件后计算；received_at；downloaded_at 可空；download_status 待下载/下载中/已下载/失败/文件缺失；availability 待检查/可用/需补录或重传；checked_by FK 可空；checked_at 可空</td></tr><tr><td><b>审核与确认</b><br><code>reviews</code></td><td>一个具体审核对象的一项确认要求及结果</td><td>id PK；video_id FK；file_id FK 可空；round_no；reviewer_id FK 可空；reviewer_role 医生/客户/内部；order_group 可空，同组可同时审核；required 是否必要；result 待确认/通过/要修改/已撤销；comment；responded_at 可空；recorded_by FK 可空；source_ref 可空</td></tr><tr><td><b>交付</b><br><code>deliveries</code></td><td>把某版成片交给一个接收人</td><td>id PK；file_id FK；recipient_id FK；delivered_at；recorded_by FK；source_ref 可空</td></tr><tr><td><b>定时与发布</b><br><code>publications</code></td><td>一条视频在某平台的一次发布安排或实际发布</td><td>id PK；video_id FK；file_id FK 可空；platform；status 待安排/已定时/已发布/已取消/已下架；scheduled_at 可空；published_at 可空；url 可空；confirmed_by FK 可空；confirmed_at 可空；evidence_status；source_ref 可空</td></tr><tr><td><b>待办与系统建议</b><br><code>todos</code></td><td>一件待处理的事情，或一条尚未采纳的状态建议</td><td>id PK；kind 普通待办/状态建议；description；assignee_id FK 可空；requester_id FK 可空；video_id FK 可空；project_id FK 可空；status 待处理/完成/驳回/过期；done_when；due_at 可空；completed_at 可空；resolved_by FK 可空；proposed_status 可空；based_on_revision 可空；source_ref 可空</td></tr></tbody></table></section>
+<h2 id="rules">06 / 状态、审核和证据怎么处理</h2><section><h3>员工直接修改，不要求补微信消息</h3><p>最小状态集合建议为：<b>待准备 → 文案中 → 待审核 → 录制中 → 待剪辑 → 剪辑中 → 待审片 → 待发布 → 已定时 → 已发布</b>；另外保留暂停、异常、已取消、已下架。箭头只表示常见方向，允许跳步和退回。</p><p>“大纲还是脚本”“等医生还是客户”由文件种类及审核记录解释，不必把每种组合都变成主状态。旧飞书状态迁移时保留原值和映射依据；不同表的含义不强行等同。</p><ul>
+<li>有权限的员工可直接设置进度，不要求系统补出全部中间审核记录。普通推进不强制填写说明；退回、纠错可以补原因。</li>
+<li>每次生效修改同时更新 videos.current_status、递增 status_revision，并追加 status_changes；用同一个数据库事务完成。历史不覆盖、不删除，纠错追加一条新记录。</li>
+<li>建议只能由人采纳、驳回；建议记录生成时的状态版本。旧建议与当前版本不一致时标过期，不能静默覆盖新状态。人工直接修改也检查版本，避免两个人互相覆盖。</li>
+<li>历史表的 actor_id 表示平台操作人。业务实际发生时间另记 occurred_at，不能拿“改表时间”冒充“发布时间”。历史导入如操作者无法匹配，保留原始名称与来源，不伪造人员。</li>
+<li>本版不接自动发布。即使将来接通发布平台，自动获取事实与主状态变更仍需明确规则；当前默认人工确认。</li>
+</ul></section>
+<section><h3>审核要灵活，也允许记录不齐</h3><ul>
+<li>reviews 记录每一轮需要谁确认，未回复也是一条待确认记录。reviewer_id 暂缺时可先写角色；同一 order_group 可并行，组间按约定先后。未配置顺序时不推断固定顺序。</li>
+<li>具体文件已知时绑定不可混淆的文件版本。新版本新建审核要求，不能复制旧版通过结论；保留旧记录。历史只有人工结论但版本不明时允许 file_id 为空，并标证据待补。</li>
+<li>recorded_by 是录入或确认结果的员工；reviewer_id 是实际审核人，两者不混淆。只有“已通过”的聊天候选而归属不清时，先生成待核对建议，不自动写成审核通过。</li>
+<li>审核缺口提供提示，不禁止员工基于线下或其他渠道确认后推进。既有人工已完成状态，不因新增审核要求或资料缺失自动退回。</li>
+</ul></section>
+<section><h3>微信自动下载与补录</h3><ul>
+<li>接收目录：<code>微信账号目录下的 msg/video</code>。按月扫描；JPG 可能只是封面或缩略图，不算视频文件。</li>
+<li>以现有聊天库的稳定消息 uid 定位来源；利用消息中的文件大小、MD5 等校验信息对应本地文件。文件名或接收时间只能辅助查找，不能单独认定匹配。</li>
+<li>先等文件写入稳定，再检查大小、校验值与容器可读性；符合后记“已下载”，计算 SHA-256。下载失败可重试，缓存缺失另标记，不能因此倒退视频业务状态。</li>
+<li>视频编号 video_id 表示制作内容；file_id 表示文件版本；消息 uid 表示发送事实。三者不混用。平台归档成功后再记录 archive_path，微信缓存路径不作为永久唯一地址。</li>
+<li>同一文件重复发送可合并文件记录并追加来源消息；同字节文件涉及不同视频时允许不同引用记录共享哈希。不同哈希不能直接认定内容不同，也不能因时长相近认定相同，微信转码可能改变字节。</li>
+<li>文件能对应视频就关联；不能对应先保留未匹配文件。先区分原片、成片、参考视频，再提出状态建议。收到一段原片不等于已收齐，不要求所有历史原片逐段转写。</li>
+<li>剪辑检查够用后确认可用并推进。补录、重传保留在原视频下作为待办与追加文件；可先剪现有素材，不必把整条视频退回录制中。</li>
+<li>来源消息列表仅保存稳定定位，不复制聊天正文；多次发送事实沿用现有聊天归档，应用负责跨库检查。未来需要复杂反查时再拆文件与消息关系表。</li>
+</ul></section>
+<section><h3>发布、证据和后续待办</h3><ul>
+<li>医生确认代表可以推进，不代表已经设置定时或实际发布。员工完成定时操作后记 scheduled_at，实际发布后再记 published_at；不得到点就自动认为发布成功。</li>
+<li>publications 按平台记录安排与结果；重发新建发布记录，保留原记录及下架情况。视频主状态表示员工确认的整体进度，不能因单个平台成功自动判全部完成。</li>
+<li>已发布允许暂缺链接、时间或具体文件，另标证据待补；如果连平台也未明确，先保留主状态和修改历史，不创建虚构的发布记录。补齐后关联实际发布事实。</li>
+<li>员工修改平台发布信息时，系统提示核对视频整体状态；若不同步，显示“整体进度与平台明细待核对”，不静默改另一处。</li>
+<li>标题、发布文案、封面需要改时，通过相应文件版本和待办记录。发布后数据回收、截图、补链接仍可挂在视频下；待办未结束不自动撤销已发布状态。</li>
+<li>没有明确期限不判逾期。补稿、配比、后台数据提交属于具体合作要求，不是所有视频必经步骤。</li>
+</ul></section>
+<section><h3>保持关系简单，避免旧数据误判</h3><ul>
+<li>医生、公司、项目独立存在；三张关系表的两端编号组合唯一。没有实际关系不建关联，不强制每条视频属于项目。</li>
+<li>reviews.file_id、publications.file_id 如非空，必须属于对应 video_id；待办关联视频和项目同时填写时应一致。人员身份和操作权限由服务校验，people.roles 不是完整权限系统。</li>
+<li>一个确定选题持续使用同一 video_id；若改成另一条内容，应新建记录或由人明确纠正关联，不能悄悄复用旧历史。导入旧飞书行遇到换医生、换选题的情况，先人工核对。</li>
+<li>现有聊天库、同步和认证继续复用；不复制一套聊天表。source_ref 保留稳定消息或源记录定位，跨库引用由程序检查。</li>
+</ul></section><p class="muted">本版替代 2026-10-15 v04 作为当前讨论稿；旧版保留。新增的是人工控制和历史追溯能力，并非要求员工补录所有旧材料。</p></main></html>

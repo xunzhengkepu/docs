@@ -1,0 +1,83 @@
+erDiagram
+    videos ||--o{ status_changes : "已生效修改"
+    videos o|--o{ files : "归属可待核实"
+    videos ||--o{ reviews : "审核要求"
+    files o|--o{ reviews : "具体版本可待补"
+    files ||--o{ deliveries : "交付版本"
+    videos ||--o{ publications : "定时及发布"
+    files o|--o{ publications : "发布版本可待补"
+    videos o|--o{ todos : "关联视频可空"
+    videos["视频 · videos"] {
+        string id PK
+        string doctor_id FK
+        string project_id FK
+        string owner_id FK
+        string content_type
+        string current_status
+        int status_revision
+        datetime planned_publish_at
+        string evidence_status
+    }
+    status_changes["状态修改历史 · status_changes"] {
+        string id PK
+        string video_id FK
+        string actor_id FK
+        string from_status
+        string to_status
+        int revision
+        datetime changed_at
+        string source
+    }
+    files["文件与版本 · files"] {
+        string id PK
+        string video_id FK
+        string checked_by FK
+        string kind
+        string version_label
+        string source_message_uids
+        string archive_path
+        string sha256
+        string download_status
+        string availability
+    }
+    reviews["审核与确认 · reviews"] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string reviewer_id FK
+        string recorded_by FK
+        int round_no
+        int order_group
+        boolean required
+        string result
+    }
+    deliveries["交付 · deliveries"] {
+        string id PK
+        string file_id FK
+        string recipient_id FK
+        string recorded_by FK
+        datetime delivered_at
+    }
+    publications["定时与发布 · publications"] {
+        string id PK
+        string video_id FK
+        string file_id FK
+        string confirmed_by FK
+        string platform
+        string status
+        datetime scheduled_at
+        datetime published_at
+        string url
+    }
+    todos["待办与系统建议 · todos"] {
+        string id PK
+        string video_id FK
+        string project_id FK
+        string assignee_id FK
+        string requester_id FK
+        string resolved_by FK
+        string kind
+        string status
+        string proposed_status
+        int based_on_revision
+    }
