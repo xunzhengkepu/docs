@@ -12,10 +12,6 @@ erDiagram
         text content_type
         text status
         bigint status_version
-        UUID writer_id FK
-        UUID editor_id FK
-        UUID operator_id FK
-        datetime planned_publish_at
         text note
         text source_message_uid
         UUID updated_by FK
@@ -46,7 +42,7 @@ erDiagram
         bigint duration_ms
         text source_md5
     }
-    files["其他文件 · files"] {
+    files["文稿与资料 · files"] {
         UUID id PK
         UUID task_id FK
         text source_message_uid
@@ -70,4 +66,6 @@ erDiagram
         text source_message_uid
         UUID confirmed_by FK
         datetime confirmed_at
+        bigint view_count
+        datetime stats_updated_at
     }

@@ -315,34 +315,6 @@
           "source": "系统在状态事务内递增"
         },
         {
-          "name": "writer_id",
-          "type": "UUID FK",
-          "required": "否",
-          "meaning": "对应 employees.person_id；不是直接取发文件的人",
-          "source": "明确分工；项目分工只作初始依据"
-        },
-        {
-          "name": "editor_id",
-          "type": "UUID FK",
-          "required": "否",
-          "meaning": "对应 employees.person_id",
-          "source": "明确分工或可靠上下文"
-        },
-        {
-          "name": "operator_id",
-          "type": "UUID FK",
-          "required": "否",
-          "meaning": "对应 employees.person_id",
-          "source": "明确运营或发布分工"
-        },
-        {
-          "name": "planned_publish_at",
-          "type": "datetime",
-          "required": "否",
-          "meaning": "计划发布时间，不等于实际发布",
-          "source": "明确档期消息或已有排期"
-        },
-        {
           "name": "note",
           "type": "text",
           "required": "否",
@@ -535,7 +507,7 @@
     },
     {
       "name": "files",
-      "label": "其他文件",
+      "label": "文稿与资料",
       "meaning": "脚本、大纲、封面等非视频文件；没有文件之间的关联",
       "fields": [
         {
@@ -691,6 +663,20 @@
           "required": "否",
           "meaning": "系统记下本次确认的时间",
           "source": "系统"
+        },
+        {
+          "name": "view_count",
+          "type": "bigint",
+          "required": "否",
+          "meaning": "这次发布最近一次获取到的播放／浏览量；非负整数，未知留空，不填0",
+          "source": "明确聊天反馈、可核实的后台截图或平台采集"
+        },
+        {
+          "name": "stats_updated_at",
+          "type": "datetime",
+          "required": "否",
+          "meaning": "该浏览量对应的统计时间；与 view_count 一起更新，不代表发布时间",
+          "source": "同一统计来源或采集时间"
         }
       ]
     }

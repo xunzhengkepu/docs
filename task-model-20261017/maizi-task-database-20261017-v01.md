@@ -80,10 +80,6 @@ erDiagram
         text content_type
         text status
         bigint status_version
-        UUID writer_id FK
-        UUID editor_id FK
-        UUID operator_id FK
-        datetime planned_publish_at
         text note
         text source_message_uid
         UUID updated_by FK
@@ -114,7 +110,7 @@ erDiagram
         bigint duration_ms
         text source_md5
     }
-    files["其他文件 · files"] {
+    files["文稿与资料 · files"] {
         UUID id PK
         UUID task_id FK
         text source_message_uid
@@ -138,6 +134,8 @@ erDiagram
         text source_message_uid
         UUID confirmed_by FK
         datetime confirmed_at
+        bigint view_count
+        datetime stats_updated_at
     }
 ```
 
@@ -157,9 +155,6 @@ erDiagram
     people ||--o{ project_people : "参与人"
     doctors o|--o{ tasks : "服务医生可待核实"
     projects o|--o{ tasks : "可属项目"
-    employees o|--o{ tasks : "文案负责人"
-    employees o|--o{ tasks : "剪辑负责人"
-    employees o|--o{ tasks : "运营负责人"
     people o|--o{ tasks : "最后人工更新人"
     tasks o|--o{ videos : "视频归属可待核实"
     tasks o|--o{ files : "文件归属可待核实"
@@ -219,10 +214,6 @@ erDiagram
         text content_type
         text status
         bigint status_version
-        UUID writer_id FK
-        UUID editor_id FK
-        UUID operator_id FK
-        datetime planned_publish_at
         text note
         text source_message_uid
         UUID updated_by FK
@@ -253,7 +244,7 @@ erDiagram
         bigint duration_ms
         text source_md5
     }
-    files["其他文件 · files"] {
+    files["文稿与资料 · files"] {
         UUID id PK
         UUID task_id FK
         text source_message_uid
@@ -277,6 +268,8 @@ erDiagram
         text source_message_uid
         UUID confirmed_by FK
         datetime confirmed_at
+        bigint view_count
+        datetime stats_updated_at
     }
 ```
 
@@ -378,10 +371,6 @@ people 中的员工身份
 | content_type | text | 是 | 科普、患教、其他、未知；不得凭猜测填患教 | 明确脚本或需求，默认未知 |
 | status | text | 是 | 当前进度，可由明确证据推进或人工更正 | 规则识别或人工确认，默认待准备 |
 | status_version | bigint | 是 | 当前状态的序号；从1开始，每次状态实际变化加1，对应本任务最新历史的 version | 系统在状态事务内递增 |
-| writer_id | UUID FK | 否 | 对应 employees.person_id；不是直接取发文件的人 | 明确分工；项目分工只作初始依据 |
-| editor_id | UUID FK | 否 | 对应 employees.person_id | 明确分工或可靠上下文 |
-| operator_id | UUID FK | 否 | 对应 employees.person_id | 明确运营或发布分工 |
-| planned_publish_at | datetime | 否 | 计划发布时间，不等于实际发布 | 明确档期消息或已有排期 |
 | note | text | 否 | 可选短说明：需求、修改意见或卡点；优先展示原话，不要求手填 | 明确消息提取或人工纠正 |
 | source_message_uid | text | 否 | 建立任务的依据消息；导入任务可空 | 聊天库稳定 uid |
 | updated_by | UUID FK | 否 | 对应 people.id；仅人工操作填操作人，自动处理留空 | 平台登录身份 |
@@ -422,7 +411,7 @@ people 中的员工身份
 | duration_ms | bigint | 否 | 视频时长，毫秒 | 媒体信息读取 |
 | source_md5 | text | 否 | 微信消息提供的校验值，辅助与本地文件对应 | 微信媒体元数据 |
 
-## 其他文件 `files`
+## 文稿与资料 `files`
 
 脚本、大纲、封面等非视频文件；没有文件之间的关联
 
@@ -456,6 +445,8 @@ people 中的员工身份
 | source_message_uid | text | 否 | 支持该安排或发布结果的消息 | 聊天库稳定 uid |
 | confirmed_by | UUID FK | 否 | 对应 people.id；仅人工确认时填写 | 平台登录身份 |
 | confirmed_at | datetime | 否 | 系统记下本次确认的时间 | 系统 |
+| view_count | bigint | 否 | 这次发布最近一次获取到的播放／浏览量；非负整数，未知留空，不填0 | 明确聊天反馈、可核实的后台截图或平台采集 |
+| stats_updated_at | datetime | 否 | 该浏览量对应的统计时间；与 view_count 一起更新，不代表发布时间 | 同一统计来源或采集时间 |
 
 ## 更新规则
 
@@ -463,7 +454,7 @@ people 中的员工身份
 - 不同内容保存独立文件行；同任务内相同哈希可去重，保留首次来源消息。其他发送记录仍在现有聊天库中，不承诺由这一条来源字段直接枚举全部转发。不同任务可以分别引用同一个实际文件。
 - 不设 owner、waiting_on_person、current_feedback、blocker、due_at；不设 reviews、todos、交付表；任务状态改动保存在 status_history。需求、修改意见等优先看原消息，必要时自动提取到 note。
 - 视频和其他文件不设人工维护的版本号、是否当前版、是否终版等字段；状态序号由系统自动生成；同一任务下多个文件分别保存，界面可按来源消息时间排序，不能把最后收到的文件自动认定为终版。
-- 字段“必填”表示落库要求，不是人工填表。人员分工和归属不明可留空；只有明确的一项工作才建任务，不把每条视频消息自动当新任务。
+- 字段“必填”表示落库要求，不是人工填表。人员归属不明可留空；只有明确的一项工作才建任务，不把每条视频消息自动当新任务。
 - 不再维护独立项目与公司关联，通过项目参与人找到公司人员及其公司。这表示参与公司的人员关系；公司没有参与人时不建立推断关联。同一人代表多家公司时需明确本项目身份，暂未明确则不得把全部公司算作项目合作方。
 - 已有角色、公司、项目关系优先复用；发送人不等于作者或负责人，群名不独立证明公司合作关系，无法确认不自动补全。
 - 状态建议集合：待准备、文案中、待审稿、录制中、待剪辑、剪辑中、待审片、待发布、已定时、已发布、暂停、异常、已取消、已下架。字段可扩展，但不强制逐步打卡。
@@ -475,6 +466,9 @@ people 中的员工身份
 - 历史只追加，纠错通过新记录完成；没有实际状态变化不增加序号或历史，自动消息处理按任务和消息定位幂等。updated_by 自动修改时留空，不能把聊天发送者伪装成平台操作人。tasks.updated_at 是整个任务的更新时间，改标题也会更新，不能用它判断最近一次状态变化；其他任务字段的并发更新仍需独立的更新时间或等价条件检查。
 - 人员发送时间、群和发言人通过 source_message_uid 查聊天库，不重复填。系统创建／更新的技术时间不代替发送或发布时间；非聊天来源允许该字段为空。
 - 粉丝数、账号视频数从同一个已确认主要账号的数据源同步，连同平台和采集时间一起更新；未知留空，不填零，也不混合多个账号。账号详情沿用已有资料，暂不新建账号表。
+- 任务不设置 writer_id、editor_id、operator_id、planned_publish_at。project_people 仅记录项目参与关系，不代表每条任务的实际分工。“计划周五发”等安排保留在原消息或 note，不等于已经设置定时；实际定时和发布时间分别保存在 publications.scheduled_at、published_at。
+- files 展示为“文稿与资料”，包含脚本、大纲、封面、发布文案和参考资料等非视频文件，各自独立关联任务。
+- publications.view_count 仅保存本次发布最近获取到的播放／浏览量，与 stats_updated_at 成对更新；未知留空，不能当作0。同一来源需明确对应发布记录和统计时间，旧统计不覆盖新统计；截图或消息无法确定对象时暂不写入。不同平台按各自口径分别记录，不混合；暂不新增统计历史表。
 - 发布多平台各建记录，重发另建；video_id 若非空必须属于同一 task。人工已确认发布但缺链接时保留已发布，界面根据空值显示待补。一个平台发布成功不自动代表任务所有平台完成。
 - 微信目录只作收件入口，文件归档成功后更新 storage_path；删除缓存不退回业务状态。计算哈希前等待写入稳定，媒体完整性检查不等于业务素材可用。
 - 本版仅为设计文档，尚未修改业务数据库或下载服务。原微信聊天库继续复用，不属于这13张业务表；跨库消息引用由应用校验。

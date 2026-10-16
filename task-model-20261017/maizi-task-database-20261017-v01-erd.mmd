@@ -11,9 +11,6 @@ erDiagram
     people ||--o{ project_people : "参与人"
     doctors o|--o{ tasks : "服务医生可待核实"
     projects o|--o{ tasks : "可属项目"
-    employees o|--o{ tasks : "文案负责人"
-    employees o|--o{ tasks : "剪辑负责人"
-    employees o|--o{ tasks : "运营负责人"
     people o|--o{ tasks : "最后人工更新人"
     tasks o|--o{ videos : "视频归属可待核实"
     tasks o|--o{ files : "文件归属可待核实"
@@ -73,10 +70,6 @@ erDiagram
         text content_type
         text status
         bigint status_version
-        UUID writer_id FK
-        UUID editor_id FK
-        UUID operator_id FK
-        datetime planned_publish_at
         text note
         text source_message_uid
         UUID updated_by FK
@@ -107,7 +100,7 @@ erDiagram
         bigint duration_ms
         text source_md5
     }
-    files["其他文件 · files"] {
+    files["文稿与资料 · files"] {
         UUID id PK
         UUID task_id FK
         text source_message_uid
@@ -131,4 +124,6 @@ erDiagram
         text source_message_uid
         UUID confirmed_by FK
         datetime confirmed_at
+        bigint view_count
+        datetime stats_updated_at
     }
