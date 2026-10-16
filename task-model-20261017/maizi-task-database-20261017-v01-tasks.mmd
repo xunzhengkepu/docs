@@ -1,4 +1,5 @@
 erDiagram
+    tasks ||--o{ status_history : "状态改动"
     tasks o|--o{ videos : "视频归属可待核实"
     tasks o|--o{ files : "文件归属可待核实"
     tasks ||--o{ publications : "发布安排与结果"
@@ -16,11 +17,19 @@ erDiagram
         datetime planned_publish_at
         text note
         text source_message_uid
-        text status_source
-        text status_message_uid
         UUID updated_by FK
         datetime created_at
         datetime updated_at
+    }
+    status_history["状态历史 · status_history"] {
+        UUID id PK
+        UUID task_id FK
+        text from_status
+        text to_status
+        datetime changed_at
+        text change_source
+        UUID changed_by FK
+        text source_message_uid
     }
     videos["视频文件 · videos"] {
         UUID id PK

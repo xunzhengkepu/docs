@@ -233,34 +233,6 @@
       ]
     },
     {
-      "name": "project_companies",
-      "label": "项目与公司",
-      "meaning": "项目的客户或合作公司",
-      "fields": [
-        {
-          "name": "project_id",
-          "type": "UUID PK FK",
-          "required": "是",
-          "meaning": "对应 projects.id",
-          "source": "已有项目关系"
-        },
-        {
-          "name": "company_id",
-          "type": "UUID PK FK",
-          "required": "是",
-          "meaning": "对应 companies.id",
-          "source": "已有项目关系"
-        },
-        {
-          "name": "role",
-          "type": "text",
-          "required": "否",
-          "meaning": "客户、执行方、合作方等",
-          "source": "明确合作资料"
-        }
-      ]
-    },
-    {
       "name": "project_people",
       "label": "项目参与人",
       "meaning": "一个人在某项目中承担的身份或分工",
@@ -378,20 +350,6 @@
           "source": "聊天库稳定 uid"
         },
         {
-          "name": "status_source",
-          "type": "text",
-          "required": "是",
-          "meaning": "当前状态依据：自动识别、人工确认、导入；用于防止自动覆盖人工",
-          "source": "系统记录"
-        },
-        {
-          "name": "status_message_uid",
-          "type": "text",
-          "required": "否",
-          "meaning": "支持当前状态的那条消息；人工无消息确认时可空",
-          "source": "聊天库稳定 uid"
-        },
-        {
           "name": "updated_by",
           "type": "UUID FK",
           "required": "否",
@@ -411,6 +369,69 @@
           "required": "是",
           "meaning": "最近一次更新的时间，不是业务发生时间",
           "source": "系统"
+        }
+      ]
+    },
+    {
+      "name": "status_history",
+      "label": "状态历史",
+      "meaning": "一次已生效的任务状态改动；人工和自动都记录",
+      "fields": [
+        {
+          "name": "id",
+          "type": "UUID PK",
+          "required": "是",
+          "meaning": "状态历史编号",
+          "source": "系统生成"
+        },
+        {
+          "name": "task_id",
+          "type": "UUID FK",
+          "required": "是",
+          "meaning": "对应 tasks.id",
+          "source": "当前任务"
+        },
+        {
+          "name": "from_status",
+          "type": "text",
+          "required": "否",
+          "meaning": "修改前状态；首次记录可空",
+          "source": "系统读取当前状态"
+        },
+        {
+          "name": "to_status",
+          "type": "text",
+          "required": "是",
+          "meaning": "修改后状态",
+          "source": "本次确认或自动规则"
+        },
+        {
+          "name": "changed_at",
+          "type": "datetime",
+          "required": "是",
+          "meaning": "状态写入时间，不代表业务实际发生时间",
+          "source": "系统"
+        },
+        {
+          "name": "change_source",
+          "type": "text",
+          "required": "是",
+          "meaning": "自动识别、人工修改、导入",
+          "source": "系统"
+        },
+        {
+          "name": "changed_by",
+          "type": "UUID FK",
+          "required": "否",
+          "meaning": "对应 people.id；仅人工操作填写，自动修改可空",
+          "source": "登录操作人"
+        },
+        {
+          "name": "source_message_uid",
+          "type": "text",
+          "required": "否",
+          "meaning": "本次修改依据的微信消息，无对应消息可空",
+          "source": "聊天库稳定 uid"
         }
       ]
     },

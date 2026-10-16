@@ -14,8 +14,6 @@ erDiagram
     companies ||--o{ company_contacts : "公司"
     doctors ||--o{ doctor_companies : "合作医生"
     companies ||--o{ doctor_companies : "合作公司"
-    projects ||--o{ project_companies : "项目"
-    companies ||--o{ project_companies : "公司"
     projects ||--o{ project_people : "参与项目"
     people ||--o{ project_people : "参与人"
     people["人员 · people"] {
@@ -58,11 +56,6 @@ erDiagram
         text requirements
         text source_message_uid
     }
-    project_companies["项目与公司 · project_companies"] {
-        UUID project_id PK,FK
-        UUID company_id PK,FK
-        text role
-    }
     project_people["项目参与人 · project_people"] {
         UUID project_id PK,FK
         UUID person_id PK,FK
@@ -74,6 +67,7 @@ erDiagram
 
 ```mermaid
 erDiagram
+    tasks ||--o{ status_history : "状态改动"
     tasks o|--o{ videos : "视频归属可待核实"
     tasks o|--o{ files : "文件归属可待核实"
     tasks ||--o{ publications : "发布安排与结果"
@@ -91,11 +85,19 @@ erDiagram
         datetime planned_publish_at
         text note
         text source_message_uid
-        text status_source
-        text status_message_uid
         UUID updated_by FK
         datetime created_at
         datetime updated_at
+    }
+    status_history["状态历史 · status_history"] {
+        UUID id PK
+        UUID task_id FK
+        text from_status
+        text to_status
+        datetime changed_at
+        text change_source
+        UUID changed_by FK
+        text source_message_uid
     }
     videos["视频文件 · videos"] {
         UUID id PK
@@ -141,14 +143,14 @@ erDiagram
 
 ```mermaid
 erDiagram
+    tasks ||--o{ status_history : "状态改动"
+    people o|--o{ status_history : "人工操作人"
     people ||--o| doctors : "医生身份"
     people ||--o| employees : "员工身份"
     people ||--o{ company_contacts : "公司人员身份"
     companies ||--o{ company_contacts : "公司"
     doctors ||--o{ doctor_companies : "合作医生"
     companies ||--o{ doctor_companies : "合作公司"
-    projects ||--o{ project_companies : "项目"
-    companies ||--o{ project_companies : "公司"
     projects ||--o{ project_people : "参与项目"
     people ||--o{ project_people : "参与人"
     doctors o|--o{ tasks : "服务医生可待核实"
@@ -202,11 +204,6 @@ erDiagram
         text requirements
         text source_message_uid
     }
-    project_companies["项目与公司 · project_companies"] {
-        UUID project_id PK,FK
-        UUID company_id PK,FK
-        text role
-    }
     project_people["项目参与人 · project_people"] {
         UUID project_id PK,FK
         UUID person_id PK,FK
@@ -225,11 +222,19 @@ erDiagram
         datetime planned_publish_at
         text note
         text source_message_uid
-        text status_source
-        text status_message_uid
         UUID updated_by FK
         datetime created_at
         datetime updated_at
+    }
+    status_history["状态历史 · status_history"] {
+        UUID id PK
+        UUID task_id FK
+        text from_status
+        text to_status
+        datetime changed_at
+        text change_source
+        UUID changed_by FK
+        text source_message_uid
     }
     videos["视频文件 · videos"] {
         UUID id PK
@@ -346,16 +351,6 @@ people 中的员工身份
 | requirements | text | 否 | 已经明确的合作要求；不要求员工补写 | 已有资料或明确消息提取 |
 | source_message_uid | text | 否 | 相关要求的来源消息；非群聊来源可空 | 已有聊天库 |
 
-## 项目与公司 `project_companies`
-
-项目的客户或合作公司
-
-| 字段 | 类型 | 必填 | 含义 | 来源 |
-|---|---|---|---|---|
-| project_id | UUID PK FK | 是 | 对应 projects.id | 已有项目关系 |
-| company_id | UUID PK FK | 是 | 对应 companies.id | 已有项目关系 |
-| role | text | 否 | 客户、执行方、合作方等 | 明确合作资料 |
-
 ## 项目参与人 `project_people`
 
 一个人在某项目中承担的身份或分工
@@ -384,11 +379,24 @@ people 中的员工身份
 | planned_publish_at | datetime | 否 | 计划发布时间，不等于实际发布 | 明确档期消息或已有排期 |
 | note | text | 否 | 可选短说明：需求、修改意见或卡点；优先展示原话，不要求手填 | 明确消息提取或人工纠正 |
 | source_message_uid | text | 否 | 建立任务的依据消息；导入任务可空 | 聊天库稳定 uid |
-| status_source | text | 是 | 当前状态依据：自动识别、人工确认、导入；用于防止自动覆盖人工 | 系统记录 |
-| status_message_uid | text | 否 | 支持当前状态的那条消息；人工无消息确认时可空 | 聊天库稳定 uid |
 | updated_by | UUID FK | 否 | 对应 people.id；仅人工操作填操作人，自动处理留空 | 平台登录身份 |
 | created_at | datetime | 是 | 任务创建时间 | 系统 |
 | updated_at | datetime | 是 | 最近一次更新的时间，不是业务发生时间 | 系统 |
+
+## 状态历史 `status_history`
+
+一次已生效的任务状态改动；人工和自动都记录
+
+| 字段 | 类型 | 必填 | 含义 | 来源 |
+|---|---|---|---|---|
+| id | UUID PK | 是 | 状态历史编号 | 系统生成 |
+| task_id | UUID FK | 是 | 对应 tasks.id | 当前任务 |
+| from_status | text | 否 | 修改前状态；首次记录可空 | 系统读取当前状态 |
+| to_status | text | 是 | 修改后状态 | 本次确认或自动规则 |
+| changed_at | datetime | 是 | 状态写入时间，不代表业务实际发生时间 | 系统 |
+| change_source | text | 是 | 自动识别、人工修改、导入 | 系统 |
+| changed_by | UUID FK | 否 | 对应 people.id；仅人工操作填写，自动修改可空 | 登录操作人 |
+| source_message_uid | text | 否 | 本次修改依据的微信消息，无对应消息可空 | 聊天库稳定 uid |
 
 ## 视频文件 `videos`
 
@@ -447,14 +455,15 @@ people 中的员工身份
 
 - 以 tasks 为核心；videos 与 files 各自只挂任务，没有上一版、下一版的自关联，也没有视频与其他文件之间的关系。publications 可指向明确的发布视频。
 - 不同内容保存独立文件行；同任务内相同哈希可去重，保留首次来源消息。其他发送记录仍在现有聊天库中，不承诺由这一条来源字段直接枚举全部转发。不同任务可以分别引用同一个实际文件。
-- 不设 owner、waiting_on_person、current_feedback、blocker、due_at；不设 reviews、todos、交付表、修改历史表。需求、修改意见等优先看原消息，必要时自动提取到 note。
+- 不设 owner、waiting_on_person、current_feedback、blocker、due_at；不设 reviews、todos、交付表；任务状态改动保存在 status_history。需求、修改意见等优先看原消息，必要时自动提取到 note。
 - 不设版本号、是否当前版、是否终版等无法稳定自动获得的字段；同一任务下多个文件分别保存，界面可按来源消息时间排序，不能把最后收到的文件自动认定为终版。
 - 字段“必填”表示落库要求，不是人工填表。人员分工和归属不明可留空；只有明确的一项工作才建任务，不把每条视频消息自动当新任务。
+- 不再维护独立项目与公司关联，通过项目参与人找到公司人员及其公司。这表示参与公司的人员关系；公司没有参与人时不建立推断关联。同一人代表多家公司时需明确本项目身份，暂未明确则不得把全部公司算作项目合作方。
 - 已有角色、公司、项目关系优先复用；发送人不等于作者或负责人，群名不独立证明公司合作关系，无法确认不自动补全。
 - 状态建议集合：待准备、文案中、待审稿、录制中、待剪辑、剪辑中、待审片、待发布、已定时、已发布、暂停、异常、已取消、已下架。字段可扩展，但不强制逐步打卡。
 - 明确对应任务、无冲突的消息可以按规则自动推进。下载完成本身不能说明素材收齐、可剪或审核通过；“可以发”不等于“已定时”或“已发布”。同一消息重复处理必须幂等。
-- 当前状态为人工确认时，自动结果只提示，不覆盖；其他冲突或旧消息同样先核对。员工仍可直接修改、跳步或退回。status_source 与 status_message_uid 用于保留当前依据，不是修改历史。
-- 更新使用 updated_at 或等价条件检查避免并发覆盖。updated_by 自动修改时留空，不能把聊天发送者伪装成平台操作人。既有状态被更新后不承诺能恢复历次变更。
+- 根据最新 status_history 判断当前状态来源；当前状态为人工确认时，自动结果只提示，不覆盖；其他冲突或旧消息同样先核对。员工仍可直接修改、跳步或退回。状态来源与依据消息保存在 status_history，不再在 tasks 重复保存。
+- 更新使用 updated_at 或等价条件检查避免并发覆盖。updated_by 自动修改时留空，不能把聊天发送者伪装成平台操作人。每次生效改动须在同一事务内更新 tasks.status 并追加 status_history。历史只追加，纠错通过新记录完成；未发生状态变化不重复记改动，自动消息处理需按任务和消息定位幂等。最新状态历史按任务内提交顺序确定，不能仅依赖时间戳相同情况下的排序。
 - 人员发送时间、群和发言人通过 source_message_uid 查聊天库，不重复填。系统创建／更新的技术时间不代替发送或发布时间；非聊天来源允许该字段为空。
 - 粉丝数、账号视频数从同一个已确认主要账号的数据源同步，连同平台和采集时间一起更新；未知留空，不填零，也不混合多个账号。账号详情沿用已有资料，暂不新建账号表。
 - 发布多平台各建记录，重发另建；video_id 若非空必须属于同一 task。人工已确认发布但缺链接时保留已发布，界面根据空值显示待补。一个平台发布成功不自动代表任务所有平台完成。

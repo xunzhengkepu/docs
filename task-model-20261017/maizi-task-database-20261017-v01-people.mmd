@@ -5,8 +5,6 @@ erDiagram
     companies ||--o{ company_contacts : "公司"
     doctors ||--o{ doctor_companies : "合作医生"
     companies ||--o{ doctor_companies : "合作公司"
-    projects ||--o{ project_companies : "项目"
-    companies ||--o{ project_companies : "公司"
     projects ||--o{ project_people : "参与项目"
     people ||--o{ project_people : "参与人"
     people["人员 · people"] {
@@ -48,11 +46,6 @@ erDiagram
         text name
         text requirements
         text source_message_uid
-    }
-    project_companies["项目与公司 · project_companies"] {
-        UUID project_id PK,FK
-        UUID company_id PK,FK
-        text role
     }
     project_people["项目参与人 · project_people"] {
         UUID project_id PK,FK

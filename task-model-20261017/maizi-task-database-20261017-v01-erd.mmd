@@ -1,12 +1,12 @@
 erDiagram
+    tasks ||--o{ status_history : "状态改动"
+    people o|--o{ status_history : "人工操作人"
     people ||--o| doctors : "医生身份"
     people ||--o| employees : "员工身份"
     people ||--o{ company_contacts : "公司人员身份"
     companies ||--o{ company_contacts : "公司"
     doctors ||--o{ doctor_companies : "合作医生"
     companies ||--o{ doctor_companies : "合作公司"
-    projects ||--o{ project_companies : "项目"
-    companies ||--o{ project_companies : "公司"
     projects ||--o{ project_people : "参与项目"
     people ||--o{ project_people : "参与人"
     doctors o|--o{ tasks : "服务医生可待核实"
@@ -60,11 +60,6 @@ erDiagram
         text requirements
         text source_message_uid
     }
-    project_companies["项目与公司 · project_companies"] {
-        UUID project_id PK,FK
-        UUID company_id PK,FK
-        text role
-    }
     project_people["项目参与人 · project_people"] {
         UUID project_id PK,FK
         UUID person_id PK,FK
@@ -83,11 +78,19 @@ erDiagram
         datetime planned_publish_at
         text note
         text source_message_uid
-        text status_source
-        text status_message_uid
         UUID updated_by FK
         datetime created_at
         datetime updated_at
+    }
+    status_history["状态历史 · status_history"] {
+        UUID id PK
+        UUID task_id FK
+        text from_status
+        text to_status
+        datetime changed_at
+        text change_source
+        UUID changed_by FK
+        text source_message_uid
     }
     videos["视频文件 · videos"] {
         UUID id PK
