@@ -11,6 +11,7 @@ erDiagram
         UUID project_id FK
         text content_type
         text status
+        bigint status_version
         UUID writer_id FK
         UUID editor_id FK
         UUID operator_id FK
@@ -24,6 +25,7 @@ erDiagram
     status_history["状态历史 · status_history"] {
         UUID id PK
         UUID task_id FK
+        bigint version
         text from_status
         text to_status
         datetime changed_at

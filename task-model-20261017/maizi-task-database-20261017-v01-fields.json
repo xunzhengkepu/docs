@@ -308,6 +308,13 @@
           "source": "规则识别或人工确认，默认待准备"
         },
         {
+          "name": "status_version",
+          "type": "bigint",
+          "required": "是",
+          "meaning": "当前状态的序号；从1开始，每次状态实际变化加1，对应本任务最新历史的 version",
+          "source": "系统在状态事务内递增"
+        },
+        {
           "name": "writer_id",
           "type": "UUID FK",
           "required": "否",
@@ -390,6 +397,13 @@
           "required": "是",
           "meaning": "对应 tasks.id",
           "source": "当前任务"
+        },
+        {
+          "name": "version",
+          "type": "bigint",
+          "required": "是",
+          "meaning": "本任务内的状态序号；从1开始递增，task_id＋version 唯一；不是跨任务编号",
+          "source": "系统在状态事务内生成"
         },
         {
           "name": "from_status",

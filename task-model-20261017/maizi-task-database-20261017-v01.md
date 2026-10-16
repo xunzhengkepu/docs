@@ -79,6 +79,7 @@ erDiagram
         UUID project_id FK
         text content_type
         text status
+        bigint status_version
         UUID writer_id FK
         UUID editor_id FK
         UUID operator_id FK
@@ -92,6 +93,7 @@ erDiagram
     status_history["状态历史 · status_history"] {
         UUID id PK
         UUID task_id FK
+        bigint version
         text from_status
         text to_status
         datetime changed_at
@@ -216,6 +218,7 @@ erDiagram
         UUID project_id FK
         text content_type
         text status
+        bigint status_version
         UUID writer_id FK
         UUID editor_id FK
         UUID operator_id FK
@@ -229,6 +232,7 @@ erDiagram
     status_history["状态历史 · status_history"] {
         UUID id PK
         UUID task_id FK
+        bigint version
         text from_status
         text to_status
         datetime changed_at
@@ -373,6 +377,7 @@ people 中的员工身份
 | project_id | UUID FK | 否 | 对应 projects.id；日常内容可无项目 | 既有关系或明确消息 |
 | content_type | text | 是 | 科普、患教、其他、未知；不得凭猜测填患教 | 明确脚本或需求，默认未知 |
 | status | text | 是 | 当前进度，可由明确证据推进或人工更正 | 规则识别或人工确认，默认待准备 |
+| status_version | bigint | 是 | 当前状态的序号；从1开始，每次状态实际变化加1，对应本任务最新历史的 version | 系统在状态事务内递增 |
 | writer_id | UUID FK | 否 | 对应 employees.person_id；不是直接取发文件的人 | 明确分工；项目分工只作初始依据 |
 | editor_id | UUID FK | 否 | 对应 employees.person_id | 明确分工或可靠上下文 |
 | operator_id | UUID FK | 否 | 对应 employees.person_id | 明确运营或发布分工 |
@@ -391,6 +396,7 @@ people 中的员工身份
 |---|---|---|---|---|
 | id | UUID PK | 是 | 状态历史编号 | 系统生成 |
 | task_id | UUID FK | 是 | 对应 tasks.id | 当前任务 |
+| version | bigint | 是 | 本任务内的状态序号；从1开始递增，task_id＋version 唯一；不是跨任务编号 | 系统在状态事务内生成 |
 | from_status | text | 否 | 修改前状态；首次记录可空 | 系统读取当前状态 |
 | to_status | text | 是 | 修改后状态 | 本次确认或自动规则 |
 | changed_at | datetime | 是 | 状态写入时间，不代表业务实际发生时间 | 系统 |
@@ -456,14 +462,17 @@ people 中的员工身份
 - 以 tasks 为核心；videos 与 files 各自只挂任务，没有上一版、下一版的自关联，也没有视频与其他文件之间的关系。publications 可指向明确的发布视频。
 - 不同内容保存独立文件行；同任务内相同哈希可去重，保留首次来源消息。其他发送记录仍在现有聊天库中，不承诺由这一条来源字段直接枚举全部转发。不同任务可以分别引用同一个实际文件。
 - 不设 owner、waiting_on_person、current_feedback、blocker、due_at；不设 reviews、todos、交付表；任务状态改动保存在 status_history。需求、修改意见等优先看原消息，必要时自动提取到 note。
-- 不设版本号、是否当前版、是否终版等无法稳定自动获得的字段；同一任务下多个文件分别保存，界面可按来源消息时间排序，不能把最后收到的文件自动认定为终版。
+- 视频和其他文件不设人工维护的版本号、是否当前版、是否终版等字段；状态序号由系统自动生成；同一任务下多个文件分别保存，界面可按来源消息时间排序，不能把最后收到的文件自动认定为终版。
 - 字段“必填”表示落库要求，不是人工填表。人员分工和归属不明可留空；只有明确的一项工作才建任务，不把每条视频消息自动当新任务。
 - 不再维护独立项目与公司关联，通过项目参与人找到公司人员及其公司。这表示参与公司的人员关系；公司没有参与人时不建立推断关联。同一人代表多家公司时需明确本项目身份，暂未明确则不得把全部公司算作项目合作方。
 - 已有角色、公司、项目关系优先复用；发送人不等于作者或负责人，群名不独立证明公司合作关系，无法确认不自动补全。
 - 状态建议集合：待准备、文案中、待审稿、录制中、待剪辑、剪辑中、待审片、待发布、已定时、已发布、暂停、异常、已取消、已下架。字段可扩展，但不强制逐步打卡。
 - 明确对应任务、无冲突的消息可以按规则自动推进。下载完成本身不能说明素材收齐、可剪或审核通过；“可以发”不等于“已定时”或“已发布”。同一消息重复处理必须幂等。
-- 根据最新 status_history 判断当前状态来源；当前状态为人工确认时，自动结果只提示，不覆盖；其他冲突或旧消息同样先核对。员工仍可直接修改、跳步或退回。状态来源与依据消息保存在 status_history，不再在 tasks 重复保存。
-- 更新使用 updated_at 或等价条件检查避免并发覆盖。updated_by 自动修改时留空，不能把聊天发送者伪装成平台操作人。每次生效改动须在同一事务内更新 tasks.status 并追加 status_history。历史只追加，纠错通过新记录完成；未发生状态变化不重复记改动，自动消息处理需按任务和消息定位幂等。最新状态历史按任务内提交顺序确定，不能仅依赖时间戳相同情况下的排序。
+- 根据本任务 version 最大的 status_history 判断当前状态来源；当前状态为人工确认时，自动结果只提示，不覆盖；其他冲突或旧消息同样先核对。员工仍可直接修改、跳步或退回。状态来源与依据消息保存在 status_history，不再在 tasks 重复保存。
+- UUID 只用来标识记录，不用来判断状态先后。每个任务独立编号：tasks.status_version 保存当前状态序号，status_history.version 保存每次改动的序号；查该任务 version 最大的历史即可找到最新记录，即使 changed_at 相同也不影响排序。
+- 创建或导入任务时，在同一事务内写入当前状态、status_version＝1 和第一条历史（version＝1，from_status 为空）。每次状态真正变化时，开启事务并锁定任务行，核对调用方预期的 status_version；若已过期则重新读取并判断，不能直接覆盖。读取当前状态与序号 n，将 tasks.status 改为新状态、status_version 改为 n＋1，并追加 version＝n＋1 的历史，from_status 取锁定后的原状态。全部成功才提交，任何一步失败都回滚。
+- 约束：tasks.status_version 和 status_history.version 必须为正整数；status_history 的（task_id, version）组合唯一。所有状态写入统一走上述事务，保证 tasks.status 与对应最新历史的 to_status 一致；UUID 仍是主键，不额外增加人工填写。
+- 历史只追加，纠错通过新记录完成；没有实际状态变化不增加序号或历史，自动消息处理按任务和消息定位幂等。updated_by 自动修改时留空，不能把聊天发送者伪装成平台操作人。tasks.updated_at 是整个任务的更新时间，改标题也会更新，不能用它判断最近一次状态变化；其他任务字段的并发更新仍需独立的更新时间或等价条件检查。
 - 人员发送时间、群和发言人通过 source_message_uid 查聊天库，不重复填。系统创建／更新的技术时间不代替发送或发布时间；非聊天来源允许该字段为空。
 - 粉丝数、账号视频数从同一个已确认主要账号的数据源同步，连同平台和采集时间一起更新；未知留空，不填零，也不混合多个账号。账号详情沿用已有资料，暂不新建账号表。
 - 发布多平台各建记录，重发另建；video_id 若非空必须属于同一 task。人工已确认发布但缺链接时保留已发布，界面根据空值显示待补。一个平台发布成功不自动代表任务所有平台完成。
