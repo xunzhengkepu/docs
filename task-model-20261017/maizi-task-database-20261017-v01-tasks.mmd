@@ -15,8 +15,8 @@ erDiagram
         text note
         text source_message_uid
         UUID updated_by FK
-        datetime created_at
-        datetime updated_at
+        timestamptz created_at
+        timestamptz updated_at
     }
     status_history["状态历史 · status_history"] {
         UUID id PK
@@ -24,7 +24,7 @@ erDiagram
         bigint version
         text from_status
         text to_status
-        datetime changed_at
+        timestamptz changed_at
         text change_source
         UUID changed_by FK
         text source_message_uid
@@ -59,13 +59,13 @@ erDiagram
         UUID video_id FK
         text platform
         text status
-        datetime scheduled_at
-        datetime published_at
+        timestamptz scheduled_at
+        timestamptz published_at
         text url
         text platform_video_id
         text source_message_uid
         UUID confirmed_by FK
-        datetime confirmed_at
+        timestamptz confirmed_at
         bigint view_count
-        datetime stats_updated_at
+        timestamptz stats_updated_at
     }

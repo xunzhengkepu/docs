@@ -28,7 +28,7 @@ erDiagram
         bigint follower_count
         bigint published_video_count
         text stats_platform
-        datetime stats_updated_at
+        timestamptz stats_updated_at
     }
     employees["员工 · employees"] {
         UUID person_id PK,FK
@@ -83,8 +83,8 @@ erDiagram
         text note
         text source_message_uid
         UUID updated_by FK
-        datetime created_at
-        datetime updated_at
+        timestamptz created_at
+        timestamptz updated_at
     }
     status_history["状态历史 · status_history"] {
         UUID id PK
@@ -92,7 +92,7 @@ erDiagram
         bigint version
         text from_status
         text to_status
-        datetime changed_at
+        timestamptz changed_at
         text change_source
         UUID changed_by FK
         text source_message_uid
@@ -127,15 +127,15 @@ erDiagram
         UUID video_id FK
         text platform
         text status
-        datetime scheduled_at
-        datetime published_at
+        timestamptz scheduled_at
+        timestamptz published_at
         text url
         text platform_video_id
         text source_message_uid
         UUID confirmed_by FK
-        datetime confirmed_at
+        timestamptz confirmed_at
         bigint view_count
-        datetime stats_updated_at
+        timestamptz stats_updated_at
     }
 ```
 
@@ -173,7 +173,7 @@ erDiagram
         bigint follower_count
         bigint published_video_count
         text stats_platform
-        datetime stats_updated_at
+        timestamptz stats_updated_at
     }
     employees["员工 · employees"] {
         UUID person_id PK,FK
@@ -217,8 +217,8 @@ erDiagram
         text note
         text source_message_uid
         UUID updated_by FK
-        datetime created_at
-        datetime updated_at
+        timestamptz created_at
+        timestamptz updated_at
     }
     status_history["状态历史 · status_history"] {
         UUID id PK
@@ -226,7 +226,7 @@ erDiagram
         bigint version
         text from_status
         text to_status
-        datetime changed_at
+        timestamptz changed_at
         text change_source
         UUID changed_by FK
         text source_message_uid
@@ -261,15 +261,15 @@ erDiagram
         UUID video_id FK
         text platform
         text status
-        datetime scheduled_at
-        datetime published_at
+        timestamptz scheduled_at
+        timestamptz published_at
         text url
         text platform_video_id
         text source_message_uid
         UUID confirmed_by FK
-        datetime confirmed_at
+        timestamptz confirmed_at
         bigint view_count
-        datetime stats_updated_at
+        timestamptz stats_updated_at
     }
 ```
 
@@ -295,7 +295,7 @@ people 中具有医生身份的人
 | follower_count | bigint | 否 | 主要账号粉丝数；未知不填0 | 已有飞书或账号采集 |
 | published_video_count | bigint | 否 | 该账号已发布视频数，不是本系统任务数 | 已有飞书或账号采集 |
 | stats_platform | text | 否 | 这组数字所属平台；暂按一个主要账号 | 同一统计来源 |
-| stats_updated_at | datetime | 否 | 统计对应的采集时间 | 同一统计来源 |
+| stats_updated_at | timestamptz | 否 | 统计对应的采集时间 | 同一统计来源 |
 
 ## 员工 `employees`
 
@@ -374,8 +374,8 @@ people 中的员工身份
 | note | text | 否 | 可选短说明：需求、修改意见或卡点；优先展示原话，不要求手填 | 明确消息提取或人工纠正 |
 | source_message_uid | text | 否 | 建立任务的依据消息；导入任务可空 | 聊天库稳定 uid |
 | updated_by | UUID FK | 否 | 对应 people.id；仅人工操作填操作人，自动处理留空 | 平台登录身份 |
-| created_at | datetime | 是 | 任务创建时间 | 系统 |
-| updated_at | datetime | 是 | 最近一次更新的时间，不是业务发生时间 | 系统 |
+| created_at | timestamptz | 是 | 任务创建时间 | 系统 |
+| updated_at | timestamptz | 是 | 最近一次更新的时间，不是业务发生时间 | 系统 |
 
 ## 状态历史 `status_history`
 
@@ -388,7 +388,7 @@ people 中的员工身份
 | version | bigint | 是 | 本任务内的状态序号；从1开始递增，task_id＋version 唯一；不是跨任务编号 | 系统在状态事务内生成 |
 | from_status | text | 否 | 修改前状态；首次记录可空 | 系统读取当前状态 |
 | to_status | text | 是 | 修改后状态 | 本次确认或自动规则 |
-| changed_at | datetime | 是 | 状态写入时间，不代表业务实际发生时间 | 系统 |
+| changed_at | timestamptz | 是 | 状态写入时间，不代表业务实际发生时间 | 系统 |
 | change_source | text | 是 | 自动识别、人工修改、导入 | 系统 |
 | changed_by | UUID FK | 否 | 对应 people.id；仅人工操作填写，自动修改可空 | 登录操作人 |
 | source_message_uid | text | 否 | 本次修改依据的微信消息，无对应消息可空 | 聊天库稳定 uid |
@@ -438,18 +438,19 @@ people 中的员工身份
 | video_id | UUID FK | 否 | 对应 videos.id；未能确定具体文件版本时可空 | 明确关联或人工确认 |
 | platform | text | 是 | 发布平台 | 链接、明确消息或已有发布数据 |
 | status | text | 是 | 待安排、已定时、已发布、已取消、已下架 | 明确操作结果、实际平台数据或人工确认 |
-| scheduled_at | datetime | 否 | 实际设置的定时；“计划明天发”不算已设置定时 | 明确操作确认 |
-| published_at | datetime | 否 | 实际发布时间；不是改表时间 | 实际发布数据或明确确认 |
+| scheduled_at | timestamptz | 否 | 实际设置的定时；“计划明天发”不算已设置定时 | 明确操作确认 |
+| published_at | timestamptz | 否 | 实际发布时间；不是改表时间 | 实际发布数据或明确确认 |
 | url | text | 否 | 实际发布链接；人工已确认发布时允许待补 | 聊天链接、已有采集 |
 | platform_video_id | text | 否 | 平台上的视频编号，用于去重 | 发布链接或平台数据 |
 | source_message_uid | text | 否 | 支持该安排或发布结果的消息 | 聊天库稳定 uid |
 | confirmed_by | UUID FK | 否 | 对应 people.id；仅人工确认时填写 | 平台登录身份 |
-| confirmed_at | datetime | 否 | 系统记下本次确认的时间 | 系统 |
+| confirmed_at | timestamptz | 否 | 系统记下本次确认的时间 | 系统 |
 | view_count | bigint | 否 | 这次发布最近一次获取到的播放／浏览量；非负整数，未知留空，不填0 | 明确聊天反馈、可核实的后台截图或平台采集 |
-| stats_updated_at | datetime | 否 | 该浏览量对应的统计时间；与 view_count 一起更新，不代表发布时间 | 同一统计来源或采集时间 |
+| stats_updated_at | timestamptz | 否 | 该浏览量对应的统计时间；与 view_count 一起更新，不代表发布时间 | 同一统计来源或采集时间 |
 
 ## 更新规则
 
+- 业务数据库选用 PostgreSQL，这13张业务表按 PostgreSQL 设计。UUID 使用原生 uuid 类型；时间使用 timestamptz，展示时转换为 Asia/Shanghai；角色列表使用 text[]。现有 SQLite 聊天归档是消息来源，暂时继续读取，不代表业务库也使用 SQLite。本次仅更新设计，未执行建库或数据迁移。
 - 以 tasks 为核心；videos 与 files 各自只挂任务，没有上一版、下一版的自关联，也没有视频与其他文件之间的关系。publications 可指向明确的发布视频。
 - 不同内容保存独立文件行；同任务内相同哈希可去重，保留首次来源消息。其他发送记录仍在现有聊天库中，不承诺由这一条来源字段直接枚举全部转发。不同任务可以分别引用同一个实际文件。
 - 不设 owner、waiting_on_person、current_feedback、blocker、due_at；不设 reviews、todos、交付表；任务状态改动保存在 status_history。需求、修改意见等优先看原消息，必要时自动提取到 note。

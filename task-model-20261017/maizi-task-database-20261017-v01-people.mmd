@@ -19,7 +19,7 @@ erDiagram
         bigint follower_count
         bigint published_video_count
         text stats_platform
-        datetime stats_updated_at
+        timestamptz stats_updated_at
     }
     employees["员工 · employees"] {
         UUID person_id PK,FK

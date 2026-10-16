@@ -1,5 +1,6 @@
 {
   "version": "2026-10-17-v01",
+  "database": "PostgreSQL",
   "tables": [
     {
       "name": "people",
@@ -78,7 +79,7 @@
         },
         {
           "name": "stats_updated_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "否",
           "meaning": "统计对应的采集时间",
           "source": "同一统计来源"
@@ -337,14 +338,14 @@
         },
         {
           "name": "created_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "是",
           "meaning": "任务创建时间",
           "source": "系统"
         },
         {
           "name": "updated_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "是",
           "meaning": "最近一次更新的时间，不是业务发生时间",
           "source": "系统"
@@ -393,7 +394,7 @@
         },
         {
           "name": "changed_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "是",
           "meaning": "状态写入时间，不代表业务实际发生时间",
           "source": "系统"
@@ -617,14 +618,14 @@
         },
         {
           "name": "scheduled_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "否",
           "meaning": "实际设置的定时；“计划明天发”不算已设置定时",
           "source": "明确操作确认"
         },
         {
           "name": "published_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "否",
           "meaning": "实际发布时间；不是改表时间",
           "source": "实际发布数据或明确确认"
@@ -659,7 +660,7 @@
         },
         {
           "name": "confirmed_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "否",
           "meaning": "系统记下本次确认的时间",
           "source": "系统"
@@ -673,7 +674,7 @@
         },
         {
           "name": "stats_updated_at",
-          "type": "datetime",
+          "type": "timestamptz",
           "required": "否",
           "meaning": "该浏览量对应的统计时间；与 view_count 一起更新，不代表发布时间",
           "source": "同一统计来源或采集时间"
