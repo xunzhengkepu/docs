@@ -9,6 +9,9 @@
 
 ## 当前正式版本
 
+- [20群历史问题＋近期40项证据：31类问题、消息定位与预防（公开脱敏版，2026-10-20 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-playbook-redacted-20261020-v01.html)
+- [员工交接话术速查（2026-10-20 v01）](./chat-issues-playbook-20261020/maizi-staff-phrases-20261020-v01.html)
+
 - [task 核心数据库 ERD 与逐字段含义（2026-10-17 v01）](./task-model-20261017/maizi-task-database-20261017-v01.html)
 - [task 数据库 Mermaid 与完整字段源码文档](./task-model-20261017/maizi-task-database-20261017-v01.md)
 
