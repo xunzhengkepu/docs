@@ -323,13 +323,6 @@
           "source": "明确消息提取或人工纠正"
         },
         {
-          "name": "source_message_uid",
-          "type": "text",
-          "required": "否",
-          "meaning": "建立任务的依据消息；导入任务可空",
-          "source": "聊天库稳定 uid"
-        },
-        {
           "name": "updated_by",
           "type": "UUID FK",
           "required": "否",
@@ -470,13 +463,6 @@
           "source": "系统计算"
         },
         {
-          "name": "original_filename",
-          "type": "text",
-          "required": "否",
-          "meaning": "本地或微信实际提供的文件名，可能是哈希名，不当作选题",
-          "source": "文件系统、微信元数据"
-        },
-        {
           "name": "kind",
           "type": "text",
           "required": "是",
@@ -496,13 +482,6 @@
           "required": "否",
           "meaning": "视频时长，毫秒",
           "source": "媒体信息读取"
-        },
-        {
-          "name": "source_md5",
-          "type": "text",
-          "required": "否",
-          "meaning": "微信消息提供的校验值，辅助与本地文件对应",
-          "source": "微信媒体元数据"
         }
       ]
     },

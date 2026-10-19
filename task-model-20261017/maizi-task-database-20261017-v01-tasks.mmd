@@ -13,7 +13,6 @@ erDiagram
         text status
         bigint status_version
         text note
-        text source_message_uid
         UUID updated_by FK
         timestamptz created_at
         timestamptz updated_at
@@ -36,11 +35,9 @@ erDiagram
         text storage_path
         text download_status
         text sha256
-        text original_filename
         text kind
         bigint size_bytes
         bigint duration_ms
-        text source_md5
     }
     files["文稿与资料 · files"] {
         UUID id PK

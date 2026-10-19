@@ -81,7 +81,6 @@ erDiagram
         text status
         bigint status_version
         text note
-        text source_message_uid
         UUID updated_by FK
         timestamptz created_at
         timestamptz updated_at
@@ -104,11 +103,9 @@ erDiagram
         text storage_path
         text download_status
         text sha256
-        text original_filename
         text kind
         bigint size_bytes
         bigint duration_ms
-        text source_md5
     }
     files["文稿与资料 · files"] {
         UUID id PK
@@ -215,7 +212,6 @@ erDiagram
         text status
         bigint status_version
         text note
-        text source_message_uid
         UUID updated_by FK
         timestamptz created_at
         timestamptz updated_at
@@ -238,11 +234,9 @@ erDiagram
         text storage_path
         text download_status
         text sha256
-        text original_filename
         text kind
         bigint size_bytes
         bigint duration_ms
-        text source_md5
     }
     files["文稿与资料 · files"] {
         UUID id PK
@@ -372,7 +366,6 @@ people 中的员工身份
 | status | text | 是 | 当前进度，可由明确证据推进或人工更正 | 规则识别或人工确认，默认待准备 |
 | status_version | bigint | 是 | 当前状态的序号；从1开始，每次状态实际变化加1，对应本任务最新历史的 version | 系统在状态事务内递增 |
 | note | text | 否 | 可选短说明：需求、修改意见或卡点；优先展示原话，不要求手填 | 明确消息提取或人工纠正 |
-| source_message_uid | text | 否 | 建立任务的依据消息；导入任务可空 | 聊天库稳定 uid |
 | updated_by | UUID FK | 否 | 对应 people.id；仅人工操作填操作人，自动处理留空 | 平台登录身份 |
 | created_at | timestamptz | 是 | 任务创建时间 | 系统 |
 | updated_at | timestamptz | 是 | 最近一次更新的时间，不是业务发生时间 | 系统 |
@@ -405,11 +398,9 @@ people 中的员工身份
 | storage_path | text | 否 | 实际可用的本地或归档路径；未下载可空 | 下载归档程序 |
 | download_status | text | 是 | 待下载、下载中、已下载、失败、文件缺失；链接资料可无需下载 | 下载程序 |
 | sha256 | text | 否 | 下载后计算的文件内容哈希；未知留空 | 系统计算 |
-| original_filename | text | 否 | 本地或微信实际提供的文件名，可能是哈希名，不当作选题 | 文件系统、微信元数据 |
 | kind | text | 是 | 原片、成片、参考视频、未知；默认未知 | 文件上下文与发送内容 |
 | size_bytes | bigint | 否 | 完整视频文件字节数 | 本地文件 |
 | duration_ms | bigint | 否 | 视频时长，毫秒 | 媒体信息读取 |
-| source_md5 | text | 否 | 微信消息提供的校验值，辅助与本地文件对应 | 微信媒体元数据 |
 
 ## 文稿与资料 `files`
 
@@ -450,7 +441,7 @@ people 中的员工身份
 
 ## 更新规则
 
-- 业务数据库选用 PostgreSQL，这13张业务表按 PostgreSQL 设计。UUID 使用原生 uuid 类型；时间使用 timestamptz，展示时转换为 Asia/Shanghai；角色列表使用 text[]。现有 SQLite 聊天归档是消息来源，暂时继续读取，不代表业务库也使用 SQLite。本次仅更新设计，未执行建库或数据迁移。
+- 业务数据库选用 PostgreSQL，这13张业务表按 PostgreSQL 设计。UUID 使用原生 uuid 类型；时间使用 timestamptz，展示时转换为 Asia/Shanghai；角色列表使用 text[]。现有 SQLite 聊天归档是消息来源，暂时继续读取，不代表业务库也使用 SQLite。本版提供可执行建表 SQL；数据库部署情况见本页说明，聊天与旧业务数据不自动迁移。
 - 以 tasks 为核心；videos 与 files 各自只挂任务，没有上一版、下一版的自关联，也没有视频与其他文件之间的关系。publications 可指向明确的发布视频。
 - 不同内容保存独立文件行；同任务内相同哈希可去重，保留首次来源消息。其他发送记录仍在现有聊天库中，不承诺由这一条来源字段直接枚举全部转发。不同任务可以分别引用同一个实际文件。
 - 不设 owner、waiting_on_person、current_feedback、blocker、due_at；不设 reviews、todos、交付表；任务状态改动保存在 status_history。需求、修改意见等优先看原消息，必要时自动提取到 note。
@@ -459,7 +450,7 @@ people 中的员工身份
 - 不再维护独立项目与公司关联，通过项目参与人找到公司人员及其公司。这表示参与公司的人员关系；公司没有参与人时不建立推断关联。同一人代表多家公司时需明确本项目身份，暂未明确则不得把全部公司算作项目合作方。
 - 已有角色、公司、项目关系优先复用；发送人不等于作者或负责人，群名不独立证明公司合作关系，无法确认不自动补全。
 - 状态建议集合：待准备、文案中、待审稿、录制中、待剪辑、剪辑中、待审片、待发布、已定时、已发布、暂停、异常、已取消、已下架。字段可扩展，但不强制逐步打卡。
-- 明确对应任务、无冲突的消息可以按规则自动推进。下载完成本身不能说明素材收齐、可剪或审核通过；“可以发”不等于“已定时”或“已发布”。同一消息重复处理必须幂等。
+- 明确对应任务、无冲突的消息可以按规则自动推进。下载完成本身不能说明素材收齐、可剪或审核通过；“可以发”不等于“已定时”或“已发布”。同一任务已生效的自动状态消息按（task_id, source_message_uid）防重；本表只承担状态动作，不把分析版本放进业务幂等键。建任务跨消息去重、无变化分析和其他动作日志由后续应用另行处理。
 - 根据本任务 version 最大的 status_history 判断当前状态来源；当前状态为人工确认时，自动结果只提示，不覆盖；其他冲突或旧消息同样先核对。员工仍可直接修改、跳步或退回。状态来源与依据消息保存在 status_history，不再在 tasks 重复保存。
 - UUID 只用来标识记录，不用来判断状态先后。每个任务独立编号：tasks.status_version 保存当前状态序号，status_history.version 保存每次改动的序号；查该任务 version 最大的历史即可找到最新记录，即使 changed_at 相同也不影响排序。
 - 创建或导入任务时，在同一事务内写入当前状态、status_version＝1 和第一条历史（version＝1，from_status 为空）。每次状态真正变化时，开启事务并锁定任务行，核对调用方预期的 status_version；若已过期则重新读取并判断，不能直接覆盖。读取当前状态与序号 n，将 tasks.status 改为新状态、status_version 改为 n＋1，并追加 version＝n＋1 的历史，from_status 取锁定后的原状态。全部成功才提交，任何一步失败都回滚。
@@ -467,9 +458,10 @@ people 中的员工身份
 - 历史只追加，纠错通过新记录完成；没有实际状态变化不增加序号或历史，自动消息处理按任务和消息定位幂等。updated_by 自动修改时留空，不能把聊天发送者伪装成平台操作人。tasks.updated_at 是整个任务的更新时间，改标题也会更新，不能用它判断最近一次状态变化；其他任务字段的并发更新仍需独立的更新时间或等价条件检查。
 - 人员发送时间、群和发言人通过 source_message_uid 查聊天库，不重复填。系统创建／更新的技术时间不代替发送或发布时间；非聊天来源允许该字段为空。
 - 粉丝数、账号视频数从同一个已确认主要账号的数据源同步，连同平台和采集时间一起更新；未知留空，不填零，也不混合多个账号。账号详情沿用已有资料，暂不新建账号表。
+- tasks.project_id 关联 projects.id，一个项目可包含多个任务，日常任务允许无项目。tasks 不再保存 source_message_uid，建任务的消息依据放在首条 status_history 中。videos 不再保存 original_filename 或 source_md5；文件名通过存储路径和原消息查找，微信 MD5 留在采集层用于匹配，不影响业务层 sha256 去重。
 - 任务不设置 writer_id、editor_id、operator_id、planned_publish_at。project_people 仅记录项目参与关系，不代表每条任务的实际分工。“计划周五发”等安排保留在原消息或 note，不等于已经设置定时；实际定时和发布时间分别保存在 publications.scheduled_at、published_at。
 - files 展示为“文稿与资料”，包含脚本、大纲、封面、发布文案和参考资料等非视频文件，各自独立关联任务。
 - publications.view_count 仅保存本次发布最近获取到的播放／浏览量，与 stats_updated_at 成对更新；未知留空，不能当作0。同一来源需明确对应发布记录和统计时间，旧统计不覆盖新统计；截图或消息无法确定对象时暂不写入。不同平台按各自口径分别记录，不混合；暂不新增统计历史表。
 - 发布多平台各建记录，重发另建；video_id 若非空必须属于同一 task。人工已确认发布但缺链接时保留已发布，界面根据空值显示待补。一个平台发布成功不自动代表任务所有平台完成。
 - 微信目录只作收件入口，文件归档成功后更新 storage_path；删除缓存不退回业务状态。计算哈希前等待写入稳定，媒体完整性检查不等于业务素材可用。
-- 本版仅为设计文档，尚未修改业务数据库或下载服务。原微信聊天库继续复用，不属于这13张业务表；跨库消息引用由应用校验。
+- 业务建表与状态事务函数见配套 SQL；business.create_task 保存任务及首条历史，business.change_task_status 负责后续状态更新。数据库延迟约束在事务提交时检查状态与历史一致，历史禁止修改和删除；发布视频同任务关系由组合外键保证。下载服务和聊天采集逻辑保持现状。原微信聊天库继续复用，不属于这13张业务表；跨库消息引用由应用校验。
