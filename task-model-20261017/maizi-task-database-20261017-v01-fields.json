@@ -662,5 +662,12 @@
     }
   ],
   "workflowVersion": "science-simple-20261021-v1",
-  "mediaMatchRevision": "task-20s-80-v2"
+  "mediaMatchRevision": "task-20s-80-v2",
+  "samplingRevision": "opening-step20-min40-max120-v1",
+  "openingSampling": {
+    "segmentSeconds": 20,
+    "minimumCharacters": 40,
+    "maximumSeconds": 120,
+    "insufficientAtLimit": "needs_review"
+  }
 }
