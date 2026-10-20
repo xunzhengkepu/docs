@@ -1,0 +1,183 @@
+{
+  "date": "2026-10-21",
+  "mediaMatchRevision": "task-20s-80-v2",
+  "rules": "只分析严格超过150秒的视频，取前20秒转写。每个task下的不同文稿只算一个候选，取最高匹配分数；只有一个不同task达到80%时才自动关联。取消40字转写门槛和15个百分点分差门槛；多个不同task同时达到80%仍待核对，空转写不匹配。",
+  "golden": {
+    "version": "v6",
+    "currentCases": 46,
+    "allVersionRuns": 159,
+    "newRealVideoCases": 10,
+    "frozenManuscripts": 186,
+    "oldVersionsPreserved": true
+  },
+  "moduleTests": {
+    "postgresAndMatching": 129,
+    "newMatchingUnit": 6,
+    "newPostgres": 7,
+    "live": 44,
+    "worker": 1,
+    "qwenAdapter": 4,
+    "voiceQueue": 1,
+    "videoOpening": 6
+  },
+  "deployment": {
+    "matchRevision": "task-20s-80-v2",
+    "sampleVideoCount": 10,
+    "batchReceipt": 199462,
+    "results": [
+      {
+        "messageId": 198110,
+        "doctor": "孟祥雨",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "KP18 孟祥雨 Z 晚上睡觉的四个信号，可能提示糖尿病加重",
+          "status": "待剪辑",
+          "content_type": "科普"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.8649,
+        "reasons": []
+      },
+      {
+        "messageId": 198113,
+        "doctor": "孟祥雨",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "为什么有人吃饱了还想吃？",
+          "status": "待剪辑",
+          "content_type": "科普"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.9583,
+        "reasons": []
+      },
+      {
+        "messageId": 199563,
+        "doctor": "张娟",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "KP5 张娟 zys 孩子肥胖别忽视四个检查",
+          "status": "待剪辑",
+          "content_type": "科普"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.9718,
+        "reasons": []
+      },
+      {
+        "messageId": 199564,
+        "doctor": "张娟",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "肚子大的脂肪肝，比看得见的胖更危险",
+          "status": "文案待医生确认",
+          "content_type": "未知"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.8861,
+        "reasons": [
+          {
+            "kind": "recording_video",
+            "reason": "当前自动流程只处理明确的科普任务"
+          }
+        ]
+      },
+      {
+        "messageId": 199614,
+        "doctor": "陈贝健",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "KP 151 CX 陈贝健 哪种身材最健康",
+          "status": "待剪辑",
+          "content_type": "科普"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.8333,
+        "reasons": []
+      },
+      {
+        "messageId": 199618,
+        "doctor": "陈贝健",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "KP 150 CX 陈贝健 你以为是胃疼，其实是心梗？教你5个办法，关键时刻能救命",
+          "status": "待剪辑",
+          "content_type": "科普"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.9028,
+        "reasons": []
+      },
+      {
+        "messageId": 199361,
+        "doctor": "房医生",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "你可以熬夜，但你必须学会暴力修复",
+          "status": "文案待医生确认",
+          "content_type": "未知"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.9149,
+        "reasons": [
+          {
+            "kind": "recording_video",
+            "reason": "当前自动流程只处理明确的科普任务"
+          }
+        ]
+      },
+      {
+        "messageId": 199566,
+        "doctor": "张娟",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "KP2 张娟 zys  减肥总失败？你可能不是嘴馋是代谢卡住了",
+          "status": "待剪辑",
+          "content_type": "科普"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.8684,
+        "reasons": []
+      },
+      {
+        "messageId": 196476,
+        "doctor": "李荣红",
+        "matchesExpectedTask": true,
+        "task": null,
+        "matchStatus": "needs_review",
+        "bestScore": 0.7692,
+        "reasons": [
+          {
+            "kind": "recording_video",
+            "reason": "前20秒未达到唯一文案匹配标准"
+          }
+        ]
+      },
+      {
+        "messageId": 198060,
+        "doctor": "王江敏",
+        "matchesExpectedTask": true,
+        "task": {
+          "title": "KP5 王江敏 crh 哪些日常习惯能帮你平稳控糖？",
+          "status": "待剪辑",
+          "content_type": "科普"
+        },
+        "matchStatus": "matched",
+        "bestScore": 0.9459,
+        "reasons": []
+      }
+    ],
+    "existingHistoryPreserved": true,
+    "newHistoryRows": 5,
+    "obsoleteMaterialOrCountWaits": 0,
+    "cachedTranscriptsOnly": true,
+    "prepare": {
+      "enabled": true,
+      "processed": 0,
+      "pending": 0,
+      "errors": 0,
+      "more": false
+    }
+  },
+  "testBoundary": "测试只使用固定转写、临时库和模拟接口，不发送微信消息、不重启微信、不用样本写生产库；这不是一次新的真实ASR准确率评测。portable golden中的2个旧本地媒体场景仍未执行。生产纠正是通过测试后的独立授权操作；现有状态历史逐行核对未被改写。"
+}
