@@ -669,5 +669,17 @@
     "minimumCharacters": 40,
     "maximumSeconds": 120,
     "insufficientAtLimit": "needs_review"
+  },
+  "downloadRetry": {
+    "version": "video-retry-v1",
+    "maxAttempts": 4,
+    "requestTimeoutSeconds": 900,
+    "backoffSeconds": [
+      60,
+      300,
+      900
+    ],
+    "uncertainNativeOutcome": "blocked_for_review",
+    "alreadyDownloaded": "no_new_request"
   }
 }
