@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [科普麦子代码结构与设计：部署架构、主链路、模块与测试（2026-10-20 v01）](./code-architecture-20261020/maizi-code-architecture-20261020-v01.html)
+
 - [20群历史问题＋近期40项证据：31类问题、消息定位与预防（公开脱敏版，2026-10-20 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-playbook-redacted-20261020-v01.html)
 - [员工交接话术速查（2026-10-20 v01）](./chat-issues-playbook-20261020/maizi-staff-phrases-20261020-v01.html)
 
