@@ -306,7 +306,7 @@
           "type": "text",
           "required": "是",
           "meaning": "当前进度，可由明确证据推进或人工更正",
-          "source": "规则识别或人工确认，默认待准备"
+          "source": "简化科普规则或人工确认；正式文案建任务时默认文案待医生确认"
         },
         {
           "name": "status_version",
@@ -660,5 +660,6 @@
         }
       ]
     }
-  ]
+  ],
+  "workflowVersion": "science-simple-20261021-v1"
 }

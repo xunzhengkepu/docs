@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [当前简化科普状态机、数据库迁移与测试结果（2026-10-21，按用户要求更新原HTML）](./task-model-20261017/maizi-task-database-20261017-v01.html#science-simple)
+
 - [全部31类群聊问题与会议纪要复核：可避免范围、简化项与剩余问题（2026-10-21 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-meeting-full-review-20261021-v01.html)
 
 - [前10条群聊问题与会议纪要对照（2026-10-21 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-meeting-comparison-20261021-v01.html)

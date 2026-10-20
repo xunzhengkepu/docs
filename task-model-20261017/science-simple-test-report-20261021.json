@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-21",
+  "policy": "science-simple-20261021-v1",
+  "golden": {
+    "version": "v5",
+    "current": 36,
+    "newHistoricalChatCases": 13,
+    "allVersionRuns": 113,
+    "failed": 0,
+    "oldVersionsUnmodified": true
+  },
+  "tests": {
+    "scienceUnit": 12,
+    "sciencePostgres": 5,
+    "legacyPostgresModules": [
+      57,
+      8,
+      9,
+      13,
+      14,
+      10
+    ],
+    "livePython": 44,
+    "worker": 1,
+    "qwenAdapter": 4,
+    "voiceQueue": 1,
+    "videoOpening": 6
+  },
+  "boundary": "测试使用临时数据库、模拟接口和固定转写文本，没有向真实联系人发消息、重启微信或用样本改生产数据。这验证状态契约和媒体匹配，不代表新的真实ASR准确率评测。固定集中另有2个本地媒体集成场景未在portable golden执行。",
+  "deployment": {
+    "policy": "science-simple-20261021-v1",
+    "database": "maizi_business",
+    "taskRows": 380,
+    "historyRows": 416,
+    "businessRowsUnchanged": true,
+    "backupVerified": true,
+    "migrationSha256": "f85768fc0ddcca718130ddbac2aae1cf442c14eb843ee776c2403ca8d3af2595"
+  }
+}
