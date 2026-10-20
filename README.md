@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [全部31类群聊问题与会议纪要复核：可避免范围、简化项与剩余问题（2026-10-21 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-meeting-full-review-20261021-v01.html)
+
 - [前10条群聊问题与会议纪要对照（2026-10-21 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-meeting-comparison-20261021-v01.html)
 
 - [科普麦子代码结构与设计：部署架构、主链路、模块与测试（2026-10-20 v01）](./code-architecture-20261020/maizi-code-architecture-20261020-v01.html)
