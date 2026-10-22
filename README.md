@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [当前系统结构与运行细节：本地 PostgreSQL、阿里云网页、视频链路与员工提醒（2026-10-23 v01）](./system-structure-20261023/maizi-system-structure-20261023-v01.html)
+
 - [微信视频下载问题复盘与改进方案：原因、已修复项、全量核查与待实施计划（2026-10-22 v01）](./video-download-20261022/maizi-video-download-review-20261022-v01.html)
 
 - [当前科普状态机：task级匹配修复与测试结果（2026-10-21，按用户要求更新原HTML）](./task-model-20261017/maizi-task-database-20261017-v01.html#download-retry)
