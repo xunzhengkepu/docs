@@ -1,0 +1,40 @@
+flowchart LR
+    subgraph windows["Windows 本机"]
+        wechat["微信客户端与本地消息、媒体"]
+        capture["refresh / wx-reader / import"]
+        archive[("archive.sqlite 消息归档")]
+        downloader["video-opening-worker / 原生下载 / 校验"]
+        disk["本地视频与文稿文件"]
+        state["task-state-worker → live_state / 本地 Whisper"]
+        pg[("PostgreSQL 18.6 / maizi_business / business + workflow")]
+        sync["cloud-sync / source-ready-sync"]
+        alert["下载终止失败 → 员工资格核查 → 提醒台账"]
+        sender["send-worker / 原生发送"]
+    end
+    subgraph ecs["阿里云 ECS"]
+        web["员工浏览器"]
+        http["nginx HTTPS → Node HTTP API / SSE"]
+        cloudArchive[("archive.sqlite 查询副本")]
+        outbox[("outbox.sqlite 发送队列")]
+        media["媒体索引、异步任务、预览与上传附件缓存"]
+        cloudPg[("PostgreSQL 18.6 / maizi_business 业务副本")]
+    end
+    subgraph services["外部服务"]
+        qwen["Qwen ASR：聊天语音与指定范围开头"]
+        feishu["飞书：当前仍启用状态投影"]
+    end
+    wechat --> capture --> archive
+    archive --> downloader --> disk --> state
+    archive --> state --> pg
+    pg -.->|"本次全量快照；尚未持续复制或切换主写"| cloudPg
+    archive --> sync
+    web --> http
+    http --> cloudArchive
+    http --> outbox
+    http --> media
+    sync -->|"HTTPS 消息增量与身份"| http
+    sync -->|"领取媒体任务与上传预览"| media
+    downloader --> alert --> sender
+    outbox -->|"本机领取与回报"| sender --> wechat
+    sync -.->|"语音转写"| qwen
+    state -.->|"事务提交后异步同步"| feishu
