@@ -9,8 +9,7 @@
 
 ## 当前正式版本
 
-- [当前系统结构与运行细节：本地主写、阿里云 PostgreSQL 业务快照与后续替代路径（2026-10-23 v02）](./system-structure-20261023/maizi-system-structure-20261023-v02.html)
-
+- [当前系统结构与运行细节：微信与阿里云盘双入口、本地主写及云端 PostgreSQL 副本（2026-10-23 v03）](./system-structure-20261023/maizi-system-structure-20261023-v03.html)
 
 - [微信视频下载问题复盘与改进方案：原因、已修复项、全量核查与待实施计划（2026-10-22 v01）](./video-download-20261022/maizi-video-download-review-20261022-v01.html)
 
@@ -41,6 +40,8 @@
 - [AI 健康项目架构图](./ai-health-mermaid-strucutre.html)
 
 ## 历史正式版本
+
+- [当前系统结构与运行细节：本地主写、阿里云 PostgreSQL 业务快照与后续替代路径（2026-10-23 v02）](./system-structure-20261023/maizi-system-structure-20261023-v02.html)
 
 - [当前系统结构与运行细节：本地 PostgreSQL、阿里云网页、视频链路与员工提醒（2026-10-23 v01）](./system-structure-20261023/maizi-system-structure-20261023-v01.html)
 
