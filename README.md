@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [10状态员工话术主线：确认的12条转换、表外代码清单与真实案例对照（2026-10-28 v01，尚未实施）](./staff-trigger-state-table-20261028/maizi-staff-trigger-state-table-20261028-v01.html)
+
 - [状态机业务梳理与下一步行动：进入、退出、问题分类与待确认事项（2026-10-28 v01）](./state-business-review-20261028/maizi-state-business-review-20261028-v01.html)
 
 - [改话术后仍会遇到的问题：原因、修复路径与验收（2026-10-28 v01）](./staff-phrases-residual-review-20261028/maizi-staff-phrases-residual-review-20261028-v01.html)
