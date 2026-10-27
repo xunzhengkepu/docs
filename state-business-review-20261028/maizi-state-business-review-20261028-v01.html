@@ -1,0 +1,24 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>状态机业务梳理与下一步行动｜2026-10-28 v01</title><style>body{margin:0;background:#f5f7fa;color:#172638;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1100px;margin:auto;padding:40px 24px 70px}h1{font-size:32px;line-height:1.4}h2{margin-top:36px;font-size:24px}.meta,footer{color:#526176}.notice{background:#e8f2ff;border-left:4px solid #2877bd;padding:18px}.pending{background:#fff4df;border-left:4px solid #b98a26;padding:16px 20px}.table{overflow:auto}table{border-collapse:collapse;width:100%;background:white}th,td{padding:13px;border:1px solid #dce3eb;text-align:left;vertical-align:top}th{background:#eaf0f5}li{margin:9px 0}a{color:#2369ac}footer{margin-top:40px;font-size:14px}@media print{body{background:white}main{padding:0}tr{break-inside:avoid}}</style></head><body><main>
+<p class="meta">业务讨论稿 · 2026-10-28 · v01 · 待确认，不是实施方案</p>
+<h1>状态机业务梳理与下一步行动</h1>
+<div class="notice">先停下补代码、补规则，先确定：<strong>每个状态代表什么业务事实、由谁确认这个事实、下一步交给谁。</strong>这三件事确定后，再收缩代码。本文保存本轮业务分析；只发布文档，不修改代码或规则。</div>
+<h2>1. 从开始到发布：每个状态凭什么进、凭什么出</h2>
+<p>下面列的是业务主线，不把当前代码里的跳步能力当成已经确定的业务规则。进出条件说不清的地方明确标出，先解决链路问题。</p>
+<div class="table"><table><thead><tr><th>状态</th><th>凭什么进入</th><th>凭什么跳出</th></tr></thead><tbody><tr><td>文案制作中（是否纳入，待确认）</td><td>不清楚：选题确定、分配文案，还是开始写稿时算作品开始？</td><td>正式文案提交医生审核</td></tr><tr><td>文案待医生确认</td><td>文案人员明确提交这条作品的正式文案</td><td>医生认可 → 待录制；医生提出修改 → 文案修改中</td></tr><tr><td>文案修改中</td><td>医生明确要求修改文案</td><td>修改稿重新提交 → 文案待医生确认</td></tr><tr><td>待录制</td><td>医生批准文案</td><td>不清楚：医生说已上传，还是员工确认原片已收到且可剪，才算完成交接？</td></tr><tr><td>待剪辑</td><td>依赖上一项确认：原片交接完成</td><td>剪辑师明确开始剪辑</td></tr><tr><td>剪辑中</td><td>剪辑师确认已开始剪辑</td><td>剪辑师提交成片供医生审核</td></tr><tr><td>成片待医生确认</td><td>剪辑师明确交付这条作品的成片</td><td>医生认可 → 待发布；医生要求修改 → 成片修改中</td></tr><tr><td>成片修改中</td><td>医生明确要求修改成片</td><td>修改版重新提交 → 成片待医生确认</td></tr><tr><td>待发布</td><td>医生批准成片</td><td>运营确认定时设置完成 → 已定时；确认实际发布完成 → 已发布</td></tr><tr><td>已定时</td><td>运营或剪辑师确认定时设置完成</td><td>实际发布完成 → 已发布；取消或返修后去哪里尚未说清</td></tr><tr><td>已发布</td><td>负责发布的人确认平台发布成功</td><td>正常主线结束</td></tr></tbody></table></div>
+<p>“暂停、异常、已取消、已下架”不属于顺序主线。它们目前的进入依据、处理责任和恢复去向没有形成统一业务约定，暂时不宜继续扩展自动转换。</p>
+<div class="pending"><strong>需要业务负责人确认的三件事：</strong><ol><li>作品从选题／派单开始管理，还是从第一份正式文案开始？</li><li>原片交接完成，以医生“已上传”为准，还是以接收员工“已收到，可以剪”为准？</li><li>“已定时”是制作主线中的状态，还是作品仍处于待发布，只附带一个排期信息？</li></ol>以上均未代替业务负责人作决定。</div>
+<h2>2. 已遇到的问题，归成四类</h2>
+<div class="table"><table><thead><tr><th>问题类别</th><th>根本原因</th><th>优先解决思路</th></tr></thead><tbody><tr><td>状态和交接边界不清</td><td>状态图设计问题。制作进度、审批结果、发布排期混在一条线上；有些节点没有明确交接人。</td><td>先确定各阶段的交接责任，由交出方和必要的接收方用统一回执确认；说不清的节点先调整业务图。</td></tr><tr><td>完成、计划、送审、批准混淆</td><td>员工话术缺失为主。一句话经常省略动作对象和完成程度；系统再用关键词猜。</td><td>员工统一说“哪条作品＋已完成什么＋交给谁”；医生保留自然回复，但要回复具体作品。</td></tr><tr><td>不知道是哪条作品，或证据没收到</td><td>系统没拿到信息。作品引用、身份、业务类型、附件或正文不完整；措辞明确也补不出这些事实。</td><td>员工引用对应作品并确认交接；系统只负责保留关联和证据，信息不足交给明确的人补齐。</td></tr><tr><td>明确的话也被拦住，或参考文字被当成事实</td><td>系统判断方式问题。同一事实被关键词规则、AI和校验层重复解释，标准不一致。</td><td>优先采用统一回执；自然表达由AI解释成同一种业务事件，后面只检查角色、作品和转换是否合法。</td></tr></tbody></table></div>
+<p>第四类不应硬归成“员工不会说话”或“极少见”。目前没有足够频率数据，能把某一类认定为极少见。</p>
+<h2>3. 规则收缩到三个方向</h2>
+<ol><li><strong>员工明确报交接：</strong>引用作品，说明完成事实和下一步接收人；不要求背固定句子。</li><li><strong>系统确认事实归属：</strong>确认是哪条作品、谁有权确认；不靠时间相邻猜作品。</li><li><strong>按业务图转换：</strong>规则和AI都提交同一种事件，使用同一套转换条件。</li></ol>
+<p>AI负责理解自然表达，不负责替业务决定“什么才算完成交接”。</p>
+<h2>4. 补丁删除或合并候选：只列，不执行</h2>
+<p>以下只是候选，不能在业务边界确认前直接删除。</p>
+<div class="table"><table><thead><tr><th>删除／合并候选</th><th>为什么像补丁</th><th>收缩前提</th></tr></thead><tbody><tr><td>不断增加“可以没问题、帮您定时啦”等具体句式</td><td>每出现一种表达就加一条分支，难以维护</td><td>统一交接表达，其他表达交给同一语义判断入口</td></tr><tr><td>整句含问号、否定词、未来时间就拦截，再逐个加例外</td><td>对句子形式判断，容易误伤已经完成的事实</td><td>按业务事件判断完成与否，取消整句级一刀切</td></tr><tr><td>规则与AI校验各自维护一套词语判断</td><td>同一句话可能得到相反结论</td><td>保留一套业务校验，避免重复理解文本</td></tr><tr><td>同发送人、最近消息、时间距离推测任务</td><td>用时间关系代替作品身份，是信息缺失的补偿</td><td>员工引用作品，系统提供稳定任务关联</td></tr><tr><td>为绕过缺失中间消息不断增加跳步</td><td>可能掩盖交接流程没有落实，也可能是合理业务需求</td><td>先决定哪些交接必须记录、哪些阶段只是可选过程</td></tr><tr><td>“已定时”等节点上的特殊恢复和返修分支</td><td>主线与排期混在一起，出口越补越多</td><td>先决定排期是否应独立于制作状态</td></tr></tbody></table></div>
+<p><strong>不能当补丁删掉的：</strong>来源记录、重复处理保护、身份权限、人工更正保护、文件真实性验证。它们保障事实可靠，不是在猜业务含义。</p>
+<p>150秒、80%、120秒这些阈值也应另行审视，但先确认原片交接依据，再决定它们是必要验收条件还是辅助信息，不宜现在直接宣布删除。</p>
+<h2>5. 接下来做什么：按优先级排列</h2>
+<ol><li>先确认作品起点、原片交接标准和“已定时”的业务定位。</li><li>为每次交接指定确认人，制定一页员工统一回执话术。</li><li>用已发生的真实案例走一遍业务图，只标出无法确定进出的节点。</li><li>确定唯一的事件与转换口径，列出可以合并或删除的重复判断。</li><li>业务图确认后，再安排最小范围的实现和回归验证。</li></ol>
+<footer><a href="../README.md">返回文档目录</a> · 本版本只保存业务分析与清单，不新增预设场景，不批准代码改动，不执行删除。此前技术分析文档保留为历史参考，后续实施以业务确认结果为前提。</footer>
+</main></body></html>
