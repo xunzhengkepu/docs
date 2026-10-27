@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [状态机业务梳理与下一步行动：进入、退出、问题分类与待确认事项（2026-10-28 v01）](./state-business-review-20261028/maizi-state-business-review-20261028-v01.html)
+
 - [改话术后仍会遇到的问题：原因、修复路径与验收（2026-10-28 v01）](./staff-phrases-residual-review-20261028/maizi-staff-phrases-residual-review-20261028-v01.html)
 
 - [员工状态交接话术：提交、返修、定时、发布与异常交接（2026-10-28 v01）](./staff-state-phrases-20261028/maizi-staff-state-phrases-20261028-v01.html)
