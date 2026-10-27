@@ -1,0 +1,87 @@
+{
+  "scope": "Pure function synthetic checks only; supplied model proposals, no API, database or WeChat calls",
+  "cases": [
+    {
+      "case": "mixed_ack",
+      "text": "成片已剪好，请问今天审核可以吗？",
+      "rule": {
+        "action": "no_change",
+        "toStatus": null,
+        "reason": "疑问或条件句不是完成"
+      },
+      "validatorWithSuppliedProposal": {
+        "action": "needs_review",
+        "reason": "qwen_state_completion_not_established"
+      }
+    },
+    {
+      "case": "schedule_mixed",
+      "text": "已设置定时，尚未发布。",
+      "rule": {
+        "action": "no_change",
+        "toStatus": null,
+        "reason": "否定或撤销不表示完成"
+      },
+      "validatorWithSuppliedProposal": {
+        "action": "needs_review",
+        "reason": "qwen_state_completion_not_established"
+      }
+    },
+    {
+      "case": "publication_history",
+      "text": "原来是定时发布，现在已发布成功。",
+      "rule": {
+        "action": "propose",
+        "toStatus": "已发布",
+        "reason": "明确发布事实，不补造中间审批",
+        "publicationReceiptVerified": true
+      },
+      "validatorWithSuppliedProposal": {
+        "action": "needs_review",
+        "reason": "qwen_state_not_platform_publication"
+      }
+    },
+    {
+      "case": "reference",
+      "text": "这是参考话术：已发布。",
+      "rule": {
+        "action": "propose",
+        "toStatus": "已发布",
+        "reason": "明确发布事实，不补造中间审批",
+        "publicationReceiptVerified": true
+      },
+      "validatorWithSuppliedProposal": {
+        "action": "propose",
+        "toStatus": "已发布",
+        "reason": "synthetic test",
+        "publicationReceiptVerified": true
+      }
+    },
+    {
+      "case": "cancel",
+      "text": "定时已取消成功，尚未发布。",
+      "rule": {
+        "action": "no_change",
+        "toStatus": null,
+        "reason": "否定或撤销不表示完成"
+      },
+      "validatorWithSuppliedProposal": {
+        "action": "needs_review",
+        "reason": "qwen_state_completion_not_established"
+      }
+    },
+    {
+      "case": "revision",
+      "text": "字幕改一下。",
+      "rule": {
+        "action": "no_change",
+        "toStatus": null,
+        "reason": "补录等素材细节不倒退剪辑进度"
+      },
+      "validatorWithSuppliedProposal": {
+        "action": "needs_review",
+        "reason": "qwen_state_transition_not_allowed"
+      }
+    }
+  ]
+}
