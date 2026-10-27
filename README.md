@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [员工状态交接话术：提交、返修、定时、发布与异常交接（2026-10-28 v01）](./staff-state-phrases-20261028/maizi-staff-state-phrases-20261028-v01.html)
+
 - [原174条未闭环事件逐条深挖：对应task、原始证据、代码根因与修复验收（2026-10-23 v01）](./automation-174-deep-dive-20261023/maizi-174-event-task-root-causes-20261023-v01.html)
 
 - [当前 task 状态转换：每一步的规则、视频匹配与潜在问题（2026-10-23 v01）](./task-status-rules-20261023/maizi-task-status-rules-and-risks-20261023-v01.html)
