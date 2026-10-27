@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [改话术后仍会遇到的问题：原因、修复路径与验收（2026-10-28 v01）](./staff-phrases-residual-review-20261028/maizi-staff-phrases-residual-review-20261028-v01.html)
+
 - [员工状态交接话术：提交、返修、定时、发布与异常交接（2026-10-28 v01）](./staff-state-phrases-20261028/maizi-staff-state-phrases-20261028-v01.html)
 
 - [原174条未闭环事件逐条深挖：对应task、原始证据、代码根因与修复验收（2026-10-23 v01）](./automation-174-deep-dive-20261023/maizi-174-event-task-root-causes-20261023-v01.html)
