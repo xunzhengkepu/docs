@@ -84,3 +84,9 @@
 - [maizi-workhub-project-summary-20261006.html](./maizi-workhub-project-summary-20261006.html)
 - [maizi-database-structure.html](./maizi-database-structure.html)
 - [maizi-postgresql-database-structure-20261006.html](./maizi-postgresql-database-structure-20261006.html)
+
+## 交接探针离线候选与回测（2026-10-28）
+
+- [交接探针 v1：详细规则与近期回测](./handoff-probes-20261028/handoff-rules-backtest.html)
+
+以上为当时的离线候选版快照，保留原报告，不代表后续讨论定稿或线上规则。
