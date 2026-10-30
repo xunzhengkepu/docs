@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 590" role="img" aria-labelledby="title desc">
+<title id="title">媒体下载与 DLL 生命周期是两条不同的完成线</title><desc id="desc">原生调用提交下载后，微信异步下载；DLL 只有满足生命周期保护条件才可卸载。外部文件观察不占用原生操作锁，调用返回不等于文件完成。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="#62758a"/></marker></defs>
+<style>text{font-family:"Microsoft YaHei",system-ui,sans-serif;fill:#19364a}.lane{font-size:23px;font-weight:700}.node{font-size:19px;font-weight:700}.detail{font-size:15px}.edge{font-size:14px;fill:#425c70}</style>
+<rect width="1200" height="590" fill="#f7f9fc"/>
+<rect x="25" y="70" width="250" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="42" y="99" class="node">需要主动下载</text>
+<text x="42" y="125" class="detail">本机尚无可校验的源文件</text>
+<rect x="325" y="70" width="250" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="342" y="99" class="node">原生提交</text>
+<text x="342" y="125" class="detail">Node → Python → C++ DLL</text>
+<rect x="625" y="70" width="250" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="642" y="99" class="node">微信异步下载</text>
+<text x="642" y="125" class="detail">客户端执行网络传输</text>
+<rect x="925" y="70" width="250" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="942" y="99" class="node">本机文件落盘</text>
+<text x="942" y="125" class="detail">可能先于或晚于 DLL 卸载</text>
+<rect x="325" y="270" width="250" height="110" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="342" y="299" class="node">生命周期检查</text>
+<text x="342" y="325" class="detail">PowerShell + 原生保护</text>
+<text x="342" y="348" class="detail">核对回调释放、模块状态</text>
+<rect x="625" y="270" width="250" height="110" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="642" y="299" class="node">安全卸载与释放机会</text>
+<text x="642" y="325" class="detail">确认安全才继续</text>
+<text x="642" y="348" class="detail">结果不明：保留阻断</text>
+<rect x="925" y="270" width="250" height="110" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="942" y="299" class="node">外部完成观测</text>
+<text x="942" y="325" class="detail">独立 observer + Python</text>
+<text x="942" y="348" class="detail">精确消息、大小／哈希校验</text>
+<rect x="925" y="455" width="250" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="942" y="484" class="node">生成预览并上传</text>
+<text x="942" y="510" class="detail">实际上传后云端才 ready</text>
+<path d="M275 117 L325 117" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M575 117 L625 117" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M875 117 L925 117" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M450 165 L450 270" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M575 325 L625 325" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M1050 165 L1050 270" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M1050 380 L1050 455" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="32" y="285" class="node">锁保护什么？</text>
+<text x="32" y="319" class="detail">原生提交与安全收尾需要协调。</text>
+<text x="32" y="346" class="detail">等文件／转码／上传不需要</text>
+<text x="32" y="373" class="detail">一直占着微信原生操作锁。</text>
+<text x="32" y="400" class="detail">图片与视频轮流，发送优先。</text>
+<text x="32" y="480" class="detail">两条分支没有固定先后；不能把“请求返回”当成“下载成功”。</text>
+</svg>

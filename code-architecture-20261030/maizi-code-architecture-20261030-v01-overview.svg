@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1040" role="img" aria-labelledby="title desc">
+<title id="title">科普麦子：本机、云端与外部服务</title><desc id="desc">Windows 执行微信接入与业务逻辑；阿里云服务员工网页。本机 PostgreSQL 是业务主库，云端 PostgreSQL 为单向同步副本。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="#62758a"/></marker></defs>
+<style>text{font-family:"Microsoft YaHei",system-ui,sans-serif;fill:#19364a}.lane{font-size:23px;font-weight:700}.node{font-size:19px;font-weight:700}.detail{font-size:15px}.edge{font-size:14px;fill:#425c70}</style>
+<rect width="1200" height="1040" fill="#f7f9fc"/>
+<rect x="20" y="20" width="710" height="850" rx="20" fill="#eaf2fa"/>
+<text x="43" y="60" class="lane">这台 Windows 电脑</text>
+<rect x="760" y="20" width="420" height="890" rx="20" fill="#edf6f1"/>
+<text x="785" y="60" class="lane">员工与阿里云 ECS</text>
+<rect x="45" y="110" width="290" height="90" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="62" y="139" class="node">微信客户端</text>
+<text x="62" y="165" class="detail">真实收发、本地消息与媒体</text>
+<rect x="405" y="110" width="290" height="90" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="422" y="139" class="node">采集器</text>
+<text x="422" y="165" class="detail">Node.js + wx-cli</text>
+<rect x="405" y="290" width="290" height="90" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="422" y="319" class="node">消息归档 SQLite</text>
+<text x="422" y="345" class="detail">原始证据、FTS 搜索、消息 UID</text>
+<rect x="45" y="460" width="650" height="140" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="62" y="489" class="node">本机后台：多个进程与受限子进程</text>
+<text x="62" y="515" class="detail">Node.js：同步、发送、状态唤醒、媒体观测</text>
+<text x="62" y="538" class="detail">Python：文件校验、媒体解析、Qwen、业务规则</text>
+<text x="62" y="561" class="detail">C++ DLL + PowerShell：受控原生发送与下载提交</text>
+<rect x="45" y="690" width="290" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="62" y="719" class="node">本机媒体文件</text>
+<text x="62" y="745" class="detail">图片／视频原件、解码文件</text>
+<text x="62" y="768" class="detail">按需生成云端预览</text>
+<rect x="405" y="690" width="290" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="422" y="719" class="node">本机 PostgreSQL 主库</text>
+<text x="422" y="745" class="detail">business：任务、文件、历史</text>
+<text x="422" y="768" class="detail">workflow：游标、判断、outbox</text>
+<rect x="790" y="90" width="370" height="90" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="807" y="119" class="node">员工浏览器</text>
+<text x="807" y="145" class="detail">HTML / CSS / 原生 JavaScript</text>
+<rect x="790" y="290" width="370" height="90" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="807" y="319" class="node">云端网页服务</text>
+<text x="807" y="345" class="detail">Nginx + Node.js HTTP + SSE</text>
+<rect x="790" y="460" width="370" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="807" y="489" class="node">云端 SQLite</text>
+<text x="807" y="515" class="detail">聊天查询副本、发送队列</text>
+<text x="807" y="538" class="detail">媒体任务与缓存索引</text>
+<rect x="790" y="620" width="370" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="807" y="649" class="node">云端文件缓存</text>
+<text x="807" y="675" class="detail">清晰图片、压缩视频、可播放语音</text>
+<text x="807" y="698" class="detail">文档预览；原件按需处理</text>
+<rect x="790" y="790" width="370" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="807" y="819" class="node">云端 PostgreSQL 副本</text>
+<text x="807" y="845" class="detail">单向镜像；不是业务双主</text>
+<text x="807" y="868" class="detail">不运行第二个作品消费 worker</text>
+<rect x="45" y="940" width="290" height="80" rx="12" fill="#fff6e6" stroke="#b7c9d6"/>
+<text x="62" y="969" class="node">Qwen API</text>
+<text x="62" y="995" class="detail">语音识别 + 结构化语义判断</text>
+<rect x="405" y="940" width="290" height="80" rx="12" fill="#fff6e6" stroke="#b7c9d6"/>
+<text x="422" y="969" class="node">飞书多维表格</text>
+<text x="422" y="995" class="detail">作品行新建、状态同步与回读</text>
+<path d="M335 155 L405 155" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M550 200 L550 290" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="515.0" y="234" width="70" height="23" fill="#f7f9fc"/>
+<text x="550" y="250" text-anchor="middle" class="edge">增量归档</text>
+<path d="M550 380 L550 460" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="508.5" y="409" width="83" height="23" fill="#f7f9fc"/>
+<text x="550" y="425" text-anchor="middle" class="edge">提交后唤醒</text>
+<path d="M975 180 L975 290" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="933.5" y="224" width="83" height="23" fill="#f7f9fc"/>
+<text x="975" y="240" text-anchor="middle" class="edge">HTTPS</text>
+<path d="M695 515 L742 515 L742 335 L790 335" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="663.5" y="389" width="161" height="23" fill="#f7f9fc"/>
+<text x="744" y="405" text-anchor="middle" class="edge">HTTPS 同步／领取</text>
+<path d="M975 380 L975 460" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M975 560 L975 620" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M190 600 L190 690" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="155.0" y="634" width="70" height="23" fill="#f7f9fc"/>
+<text x="190" y="650" text-anchor="middle" class="edge">本地读写</text>
+<path d="M550 600 L550 690" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="515.0" y="634" width="70" height="23" fill="#f7f9fc"/>
+<text x="550" y="650" text-anchor="middle" class="edge">业务事务</text>
+<path d="M695 740 L742 740 L742 840 L790 840" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="706.0" y="766" width="70" height="23" fill="#f7f9fc"/>
+<text x="741" y="782" text-anchor="middle" class="edge">单向镜像</text>
+<path d="M45 510 L29 510 L29 155 L45 155" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M370 600 L370 920 L190 920 L190 940" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M370 920 L550 920 L550 940" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

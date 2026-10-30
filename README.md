@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [科普麦子项目结构图：逐步技术栈、选型原因与运行边界（2026-10-30 v01）](./code-architecture-20261030/maizi-code-architecture-20261030-v01.html)
+
 - [10状态员工话术主线：确认的12条转换、表外代码清单与真实案例对照（2026-10-28 v01，尚未实施）](./staff-trigger-state-table-20261028/maizi-staff-trigger-state-table-20261028-v01.html)
 
 - [状态机业务梳理与下一步行动：进入、退出、问题分类与待确认事项（2026-10-28 v01）](./state-business-review-20261028/maizi-state-business-review-20261028-v01.html)
@@ -31,8 +33,6 @@
 
 - [前10条群聊问题与会议纪要对照（2026-10-21 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-meeting-comparison-20261021-v01.html)
 
-- [科普麦子代码结构与设计：部署架构、主链路、模块与测试（2026-10-20 v01）](./code-architecture-20261020/maizi-code-architecture-20261020-v01.html)
-
 - [20群历史问题＋近期40项证据：31类问题、消息定位与预防（真实群名与发言昵称版，2026-10-20 v01）](./chat-issues-playbook-20261020/maizi-chat-issues-playbook-redacted-20261020-v01.html)
 - [员工交接话术速查（2026-10-20 v01）](./chat-issues-playbook-20261020/maizi-staff-phrases-20261020-v01.html)
 
@@ -52,6 +52,8 @@
 - [AI 健康项目架构图](./ai-health-mermaid-strucutre.html)
 
 ## 历史正式版本
+
+- [科普麦子代码结构与设计：部署架构、主链路、模块与测试（2026-10-20 v01）](./code-architecture-20261020/maizi-code-architecture-20261020-v01.html)
 
 - [员工状态交接话术：提交、返修、定时、发布与异常交接（2026-10-28 v01）](./staff-state-phrases-20261028/maizi-staff-state-phrases-20261028-v01.html)
 

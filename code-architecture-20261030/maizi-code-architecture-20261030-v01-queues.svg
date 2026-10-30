@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 510" role="img" aria-labelledby="title desc">
+<title id="title">发送队列与作品状态机使用不同的持久化链路</title><desc id="desc">发送走云端 SQLite outbox、本机领取和微信原生执行；作品状态走本机 PostgreSQL 事务 outbox，再同步飞书并回读。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10" fill="#62758a"/></marker></defs>
+<style>text{font-family:"Microsoft YaHei",system-ui,sans-serif;fill:#19364a}.lane{font-size:23px;font-weight:700}.node{font-size:19px;font-weight:700}.detail{font-size:15px}.edge{font-size:14px;fill:#425c70}</style>
+<rect width="1200" height="510" fill="#f7f9fc"/>
+<text x="25" y="40" class="lane">员工发送：把要做的事先保存，再执行</text>
+<rect x="25" y="75" width="216" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="42" y="104" class="node">员工网页</text>
+<text x="42" y="130" class="detail">提交文字／附件</text>
+<rect x="263" y="75" width="216" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="280" y="104" class="node">云端 SQLite</text>
+<text x="280" y="130" class="detail">发送 outbox</text>
+<path d="M241 122 L263 122" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="501" y="75" width="216" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="518" y="104" class="node">本机 send-worker</text>
+<text x="518" y="130" class="detail">主动领取任务</text>
+<path d="M479 122 L501 122" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="739" y="75" width="216" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="756" y="104" class="node">原生发送</text>
+<text x="756" y="130" class="detail">预检 + C++ 适配</text>
+<path d="M717 122 L739 122" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="977" y="75" width="216" height="95" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="994" y="104" class="node">持久化回执</text>
+<text x="994" y="130" class="detail">成功／失败／未知</text>
+<path d="M955 122 L977 122" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="25" y="208" class="detail">结果未知时停下来核对；不因网络超时盲目重复发送。业务已完成后，诊断心跳失败不能触发重发。</text>
+<text x="25" y="280" class="lane">作品状态：本地事务先完成，飞书随后同步</text>
+<rect x="25" y="315" width="216" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="42" y="344" class="node">归档消息</text>
+<text x="42" y="370" class="detail">身份／任务关联</text>
+<rect x="263" y="315" width="216" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="280" y="344" class="node">Python + Qwen</text>
+<text x="280" y="370" class="detail">语义候选 + 规则校验</text>
+<path d="M241 365 L263 365" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="501" y="315" width="216" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="518" y="344" class="node">本机 PostgreSQL</text>
+<text x="518" y="370" class="detail">状态＋历史＋游标＋outbox</text>
+<path d="M479 365 L501 365" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="739" y="315" width="216" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="756" y="344" class="node">飞书 API / CLI</text>
+<text x="756" y="370" class="detail">新建／更新／查重</text>
+<path d="M717 365 L739 365" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="977" y="315" width="216" height="100" rx="12" fill="#fff" stroke="#b7c9d6"/>
+<text x="994" y="344" class="node">回读确认</text>
+<text x="994" y="370" class="detail">verified 或冲突待核对</text>
+<path d="M955 365 L977 365" fill="none" stroke="#62758a" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="25" y="463" class="detail">标题非空、task ID 绑定与幂等 journal 防重复；人工冲突不强行覆盖。两种 outbox 不是同一张表。</text>
+</svg>
