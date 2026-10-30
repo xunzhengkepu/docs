@@ -9,6 +9,10 @@
 
 ## 当前正式版本
 
+- [文稿与视频驱动的交接状态机：本次讨论总结、两句员工话术与引用协议（2026-10-31 v01，尚未部署）](./artifact-handoff-summary-20261031/maizi-artifact-handoff-thread-summary-20261031-v01.html)
+
+本次业务讨论的最新收敛方向见上文；早期话术、状态和回测报告继续保留作历史依据，不表示同一版本已实现或上线。
+
 - [科普麦子项目结构图：逐步技术栈、选型原因与运行边界（2026-10-30 v01）](./code-architecture-20261030/maizi-code-architecture-20261030-v01.html)
 
 - [10状态员工话术主线：确认的12条转换、表外代码清单与真实案例对照（2026-10-28 v01，尚未实施）](./staff-trigger-state-table-20261028/maizi-staff-trigger-state-table-20261028-v01.html)
