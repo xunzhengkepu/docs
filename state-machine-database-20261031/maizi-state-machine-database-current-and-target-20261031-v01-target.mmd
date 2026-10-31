@@ -1,0 +1,46 @@
+flowchart LR
+  MSG["库外<br/>聊天归档 SQLite<br/>素材原件与真实引用来源"]
+  NEW["新事件入口<br/>实际文稿与视频交付<br/>两句固定话术＋真实引用<br/>读取 PostgreSQL 员工职责"]
+  REPLAY["隔离快照或临时库回测<br/>使用同样的批次与事件结构<br/>不写生产业务状态和飞书"]
+  subgraph PG["拟更新 PostgreSQL：26 张表，尚未实施"]
+    direction LR
+    subgraph WF["workflow：13 张运行表"]
+      direction TB
+      RUN["新增 rule_runs<br/>规则与实现版本、模式、输入快照<br/>范围、结果汇总、交接快照引用"]
+      EV["新增 rule_events<br/>来源、真实引用、员工与职责<br/>作品、具体素材、核验与判断结果<br/>关联生效的状态历史"]
+      M["扩展 meta 的键<br/>生效批次、切换边界、分版本断点"]
+      O["扩展 outbox<br/>rule_event_id 追溯来源<br/>发送前核对批次与任务当前序号"]
+      D["保留 decisions／automation_events<br/>旧判断与兼容查询"]
+      C["沿用 context／artifacts<br/>关联上下文与当前素材指针"]
+      OBS["沿用 document_observations<br/>video_observations<br/>原件观察与就绪状态"]
+      B["沿用 bindings／local_tasks<br/>legacy_fields<br/>绑定、任务来源和历史兼容"]
+      RUN --> EV
+      EV ~~~ M ~~~ O ~~~ D ~~~ C ~~~ OBS ~~~ B
+    end
+    G["更新数据库函数与触发器<br/>不是新增业务表<br/><br/>核对当前生效规则批次<br/>核对事件及允许的状态转换<br/>拒绝旧入口无依据自动写入<br/><br/>继续保留幂等、预期序号<br/>人工保护、历史链一致性"]
+    subgraph BIZ["business：原 13 张表沿用"]
+      direction TB
+      T["tasks／status_history<br/>当前状态、序号、只追加历史"]
+      A["files／videos<br/>已有原件、来源与内容指纹"]
+      P["people／employees／doctors<br/>人员、员工多职责、医生"]
+      R["projects／project_people<br/>项目与参与人"]
+      CO["companies／company_contacts<br/>doctor_companies<br/>公司、联系人与合作关系"]
+      PUB["publications<br/>承接可核验的发布安排和结果"]
+      T ~~~ A ~~~ P ~~~ R ~~~ CO ~~~ PUB
+    end
+    WF -->|有效事件申请写入| G
+    G -->|状态与历史一起提交| BIZ
+  end
+  FS["库外<br/>飞书作品表<br/>只接收当前有效同步结果"]
+  MSG --> NEW
+  NEW --> WF
+  MSG -.隔离快照.-> REPLAY
+  WF -->|校验后投递| FS
+  classDef keep fill:#e8f1fa,stroke:#34638a,color:#18364b;
+  classDef add fill:#e3f5e9,stroke:#27804a,color:#124327;
+  classDef change fill:#fff1cc,stroke:#a77512,color:#4b3608;
+  classDef outside fill:#f1f3f5,stroke:#7c8995,color:#273746;
+  class RUN,EV add;
+  class M,O,G,NEW change;
+  class D,C,OBS,B,T,A,P,R,CO,PUB keep;
+  class MSG,REPLAY,FS outside;

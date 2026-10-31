@@ -1,0 +1,100 @@
+erDiagram
+  people ||--o| doctors : "医生身份"
+  people ||--o| employees : "员工身份"
+  people ||--o{ company_contacts : "公司联系人"
+  companies ||--o{ company_contacts : "所属公司"
+  doctors ||--o{ doctor_companies : "合作关系"
+  companies ||--o{ doctor_companies : "合作公司"
+  projects ||--o{ project_people : "项目参与人"
+  people ||--o{ project_people : "参与身份"
+  doctors o|--o{ tasks : "任务医生"
+  projects o|--o{ tasks : "任务项目"
+  people o|--o{ tasks : "更新人"
+  tasks ||--|{ status_history : "连续状态历史"
+  people o|--o{ status_history : "人工修改人"
+  tasks o|--o{ files : "稿件及文件"
+  tasks o|--o{ videos : "原片及成片"
+  tasks ||--o{ publications : "发布安排和结果"
+  videos o|--o{ publications : "发布视频"
+  people o|--o{ publications : "确认人"
+  people {
+    uuid id PK
+    text name
+    text wechat_id
+  }
+  doctors {
+    uuid person_id PK,FK
+    text display_name
+  }
+  employees {
+    uuid person_id PK,FK
+    text_array work_roles
+    boolean is_active
+  }
+  companies {
+    uuid id PK
+    text name
+  }
+  company_contacts {
+    uuid id PK
+    uuid person_id FK
+    uuid company_id FK
+    text role
+  }
+  doctor_companies {
+    uuid doctor_id PK,FK
+    uuid company_id PK,FK
+    text relationship
+  }
+  projects {
+    uuid id PK
+    text name
+    text requirements
+  }
+  project_people {
+    uuid project_id PK,FK
+    uuid person_id PK,FK
+    text_array roles
+  }
+  tasks {
+    uuid id PK
+    uuid doctor_id FK
+    uuid project_id FK
+    text status
+    bigint status_version
+    uuid updated_by FK
+  }
+  status_history {
+    uuid id PK
+    uuid task_id FK
+    bigint version
+    text from_status
+    text to_status
+    text change_source
+    text source_message_uid
+    uuid changed_by FK
+  }
+  files {
+    uuid id PK
+    uuid task_id FK
+    text source_message_uid
+    text kind
+    text sha256
+    text download_status
+  }
+  videos {
+    uuid id PK
+    uuid task_id FK
+    text source_message_uid
+    text kind
+    text sha256
+    text download_status
+  }
+  publications {
+    uuid id PK
+    uuid task_id FK
+    uuid video_id FK
+    text status
+    text source_message_uid
+    uuid confirmed_by FK
+  }

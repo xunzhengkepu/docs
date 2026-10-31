@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [状态机当前数据库与新规则升级方案（2026-10-31 v01，当前库已核验，目标尚未实施）](./state-machine-database-20261031/maizi-state-machine-database-current-and-target-20261031-v01.html) · [GitHub Mermaid 文档](./state-machine-database-20261031/maizi-state-machine-database-current-and-target-20261031-v01.md)
+
 - [文稿与视频驱动的交接状态机：本次讨论总结、两句员工话术与引用协议（2026-10-31 v01，尚未部署）](./artifact-handoff-summary-20261031/maizi-artifact-handoff-thread-summary-20261031-v01.html)
 
 本次业务讨论的最新收敛方向见上文；早期话术、状态和回测报告继续保留作历史依据，不表示同一版本已实现或上线。

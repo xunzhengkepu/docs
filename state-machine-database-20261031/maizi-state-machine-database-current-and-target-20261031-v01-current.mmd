@@ -1,0 +1,42 @@
+flowchart LR
+  MSG["库外<br/>聊天归档 SQLite<br/>素材原件与真实引用来源"]
+  OLD["应用<br/>10 月 21 日旧规则<br/>仍读取本地员工身份快照"]
+  OFFLINE["库外离线回测<br/>JSON／HTML／frozen<br/>未作为独立批次入库"]
+  subgraph PG["当前 PostgreSQL：24 张表"]
+    direction LR
+    subgraph WF["workflow：11 张运行表"]
+      direction TB
+      M["meta<br/>规则版本、断点、缓存、员工来源"]
+      D["decisions／automation_events<br/>消息判断、自动事件、证据 JSON"]
+      C["context／artifacts<br/>关联上下文与当前素材指针"]
+      OBS["document_observations<br/>video_observations<br/>原件观察与处理结果"]
+      B["bindings／local_tasks<br/>飞书绑定与本地建任务来源"]
+      O["outbox<br/>同步意图、重试、回执、错误"]
+      L["legacy_fields<br/>历史兼容字段"]
+      M ~~~ D ~~~ C ~~~ OBS ~~~ B ~~~ O ~~~ L
+    end
+    G["数据库函数与触发器<br/>不是表<br/><br/>change_task_status<br/>science_simple_history_guard<br/><br/>旧规则转换校验<br/>幂等、预期序号、人工保护<br/>历史链一致性、只追加历史"]
+    subgraph BIZ["business：13 张业务表"]
+      direction TB
+      T["tasks／status_history<br/>当前状态与只追加历史"]
+      A["files／videos<br/>来源、作品、下载状态、内容指纹"]
+      P["people／employees／doctors<br/>人员、员工多职责、医生"]
+      R["projects／project_people<br/>项目与参与人"]
+      CO["companies／company_contacts<br/>doctor_companies<br/>公司、联系人与合作关系"]
+      PUB["publications<br/>发布安排与结果；当前 0 条"]
+      T ~~~ A ~~~ P ~~~ R ~~~ CO ~~~ PUB
+    end
+    WF -->|状态写入| G
+    G -->|事务内更新| BIZ
+  end
+  FS["库外<br/>飞书作品表"]
+  MSG --> OLD
+  OLD --> WF
+  MSG -.隔离快照.-> OFFLINE
+  WF -->|outbox 投递与回执| FS
+  classDef existing fill:#e8f1fa,stroke:#34638a,color:#18364b;
+  classDef outside fill:#f1f3f5,stroke:#7c8995,color:#273746;
+  classDef guard fill:#fff1cc,stroke:#a77512,color:#4b3608;
+  class M,D,C,OBS,B,O,L,T,A,P,R,CO,PUB existing;
+  class MSG,OLD,OFFLINE,FS outside;
+  class G guard;
