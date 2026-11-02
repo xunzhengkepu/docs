@@ -9,6 +9,8 @@
 
 ## 当前正式版本
 
+- [各项目实际部署架构与技术选型取舍（2026-11-03 v01，16 图、54 步、40 项取舍）](./project-architecture-20261103/maizi-project-architecture-and-tradeoffs-20261103-v01.html) · [GitHub Mermaid 文档](./project-architecture-20261103/maizi-project-architecture-and-tradeoffs-20261103-v01.md)
+
 - [微信附件获取与上传下载可靠性复盘（2026-11-03 v01，27 类问题与改进验收）](./attachment-reliability-20261103/maizi-attachment-reliability-review-20261103-v01.html) · [GitHub Mermaid 文档](./attachment-reliability-20261103/maizi-attachment-reliability-review-20261103-v01.md)
 
 - [状态机当前数据库与新规则升级方案（2026-10-31 v01，当前库已核验，目标尚未实施）](./state-machine-database-20261031/maizi-state-machine-database-current-and-target-20261031-v01.html) · [GitHub Mermaid 文档](./state-machine-database-20261031/maizi-state-machine-database-current-and-target-20261031-v01.md)
