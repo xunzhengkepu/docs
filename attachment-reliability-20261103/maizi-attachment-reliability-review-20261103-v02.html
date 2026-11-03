@@ -1,0 +1,468 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>微信附件获取与上传下载可靠性复盘</title><style>strong{color:#174a68}nav{padding:16px;background:#edf3fa}section#latest{border-top:4px solid #24758a}body{margin:auto;max-width:1180px;padding:32px 24px;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif;color:#203046;background:#f6f8fb}main{background:white;padding:32px;border-radius:12px}h1,h2,h3{line-height:1.4;color:#123d60}h2{margin-top:42px;border-bottom:2px solid #dbe5ef;padding-bottom:10px}table{border-collapse:collapse;width:100%;font-size:14px;display:block;overflow:auto}th,td{border:1px solid #d7e0ea;padding:10px;vertical-align:top;min-width:100px}th{background:#edf3fa}tr:nth-child(even){background:#fafbfd}code{overflow-wrap:anywhere;background:#edf2f7;padding:2px 4px}pre{white-space:pre-wrap;overflow-wrap:anywhere}.mermaid{overflow:auto;margin:24px 0}summary{cursor:pointer}a{color:#1464aa}@media(max-width:600px){body{padding:10px}main{padding:16px}h1{font-size:26px}}@media print{body,main{background:white;padding:0}details{display:none}table{font-size:11px}}</style></head><body><main><h1 id="_1">微信附件获取与上传下载可靠性复盘</h1>
+<p>版本：2026 年 11 月 3 日 v02。最新证据截至当日 09:40，北京时间；运行统计取 09:36 快照。保留旧版 27 类问题，逐条增加状态，并新增 8 项发现及改进记录。覆盖视频、图片、普通文件及文稿原件；历史数字均带原审计范围，不代表当前剩余故障数。</p>
+<p>附件反复出问题，由三类因素叠加：微信原件获取链路的限制、我们自己的调度与恢复设计不完整，以及实际发生的本地和 ECS 环境故障。现有证据不支持把问题笼统归因于 Node、Python 或 PostgreSQL，也不支持认为迁移数据库就能解决微信下载问题。</p>
+<p>最需要改进的是完整文件的验收和故障闭环。消息同步成功、预览可用、本地原件完整、云端原件完整是四种不同结果，必须分别记录。</p>
+<section id="latest"><h2>先回答：原文这一节不是“全部已经修复”</h2>
+<p><strong>“出现过的问题”是历史故障分类，不是修复完成清单。</strong>原文把已修复、部分改进、保护机制和待办写在同一栏，容易误读。v02 为原有 1—27 项逐条加上明确状态；28—35 是今日新增或进一步查明的子问题，彼此可能关联，不能相加当作独立事故数量。</p>
+<p><strong>截至 09:40：集中收敛第一批已上线，但微信原件下载仍受账号验证阻塞；完整原件归档尚未完成。</strong>代码修复、部署成功、离线测试通过、真实样本通过、全量历史闭环和长期稳定运行是不同结论。</p>
+<p>这次依据本地保存的旧文档、今日审计文件、部署验收日志及相关聊天记录重新核对。并非重新执行生产全量审计；没有证据的项目保留“未证明”或“未查明”，不补造原因。本轮仅更新复盘文档。</p>
+<nav><a href="#today">今天新增与收敛</a> · <a href="#snapshot">最新统计口径</a> · <a href="#remaining">剩余工作</a> · <a href="#validation">验证与证据</a></nav>
+<h2 id="today">今天新增发现、修复与仍未闭环事项</h2><table><thead><tr><th>编号</th><th>问题</th><th>证据/影响</th><th>处理状态</th><th>修复内容或剩余边界</th></tr></thead><tbody><tr><td>28</td><td>账号验证失败，微信进程存在但只有登录库</td><td>03:45 起影响图片和视频共享准入；09:36 诊断 login_database_only，未观察到联系人、会话、消息库</td><td>诊断代码已上线；账号依赖未恢复</td><td>必须重新取得严格账号身份和业务库证据，再验收新原件下载；不得绕过校验</td></tr><tr><td>29</td><td>历史视频绕过近期范围，反复进入预览队列</td><td>本地发现文件后后台观测重新入队；旧任务可能挤占近期任务</td><td>09:35 已修复上线</td><td>统一近期范围检查；历史观测保留证据但暂缓，近期已验证来源优先；手动访问保留受控入口</td></tr><tr><td>30</td><td>预览配额满后仍反复转码、上传并报失败</td><td>03:48 视频配额 24 GiB、已用约 23.993 GiB；磁盘空闲约 48.93 GiB</td><td>09:35 已修复上线，短时未新增容量失败</td><td>统一容量准入；容量不足转 deferred，有限退避，恢复后重试；保留有效预览，不让后台旧任务无条件淘汰近期预览</td></tr><tr><td>31</td><td>恢复跨多文件、多阶段，重启和并发可能留下不一致</td><td>需要同时核对任务身份、派发证据、锁和恢复日志</td><td>安全恢复机制已加强并通过离线故障注入</td><td>支持阶段中断恢复、并发锁、验证期间证据变化保护；不重置耗尽重试预算；prepared 或可能派发仍阻塞</td></tr><tr><td>32</td><td>账号依赖故障、预览失败、原件未归档被混成总体故障</td><td>不同数据层的 ready 含义不同，历史错误不能直接代表当前通道</td><td>健康汇总及明确分类已上线；架构仍部分完成</td><td>显示原生准入、各类云端状态与配额；原件归档明确未证明；尚未建立统一全量附件台账</td></tr><tr><td>33</td><td>云端图片 ready 与旧错误并存、撤回分类仍有尾项</td><td>09:36 图片 1 条 ready 带 local_image_missing，11 条 ready 带 message_withdrawn；另有 35 条 unavailable 撤回图片</td><td>已识别，未见本轮全部清理证明</td><td>按消息身份、实际文件和撤回状态对账；不要把所有错误行当作当前下载失败；撤回不补采</td></tr><tr><td>34</td><td>微信登录会话退出，触发原因不明</td><td>03:44:43 视频原件校验成功，03:45:22 图片派发前身份验证失败；09:40 主进程仍存活</td><td>尚未查明根因，未证明恢复</td><td>无对应崩溃事件或新崩溃文件；更像会话退出。不能断言风控、异地登录，也不能排除此前原生下载调用影响；xlog 未解析出退出原因</td></tr><tr><td>35</td><td>云端候选包缺少测试依赖</td><td>本次云端候选测试曾因漏带依赖停止切换</td><td>已补齐并重新验证，最终 09:35 切换</td><td>最终云端 24/24；失败候选不视为成功发布。验收后清理 4 个旧/中间发布目录，未把附件或数据库当旧版本删除</td></tr></tbody></table>
+<h3>掉线时间线与责任边界</h3><p>03:43:59.916，最后一次视频适配模块已卸载；03:44:43.621，视频 228983 本地原件哈希核验成功；03:45:22.562，图片 228650 的身份预检失败，没有派发原生下载。09:40 调查显示微信主进程自 10 月 19 日持续存活，03:20 后未查到对应应用崩溃事件或新崩溃转储。登录会话不可用早于 09:35 发布，但不能排除更早的原生调用有关。缺少用户掉线提示和可解析的客户端退出证据，不能确定触发者。</p>
+<h3>为什么不断修复仍会暴露问题</h3><p>附件依赖本机微信账号、缓存引用和原生接口；自身状态分散、恢复出口不齐、预览与原件口径混用，又叠加过环境故障。此前修好了具体分支，但尚未完成统一执行器、附件台账与原件归档。今天主要收敛预览准入与安全恢复，不能推导出整条链路长期稳定。“可能随时失效”表述过重，应改为“存在明确运行依赖，且部分失败的底层原因尚不可观测”。没有证据认为换语言或迁移 RDS 就能解决这些问题。</p>
+<h2 id="snapshot">09:36 快照：可用预览不等于原件归档</h2><table><thead><tr><th>数据层</th><th>本次快照/样本</th><th>不能推出的结论</th></tr></thead><tbody><tr><td>原生下载</td><td>ready=false；图片账号验证 backoff；影响共享准入</td><td>不能宣布新增原件下载已恢复</td></tr><tr><td>云端视频</td><td>09:36:39：ready 1727；deferred 66；expired 389；unavailable 694</td><td>都是视频预览状态，不是原件归档成功率</td></tr><tr><td>视频 unavailable 细分</td><td>本地缺失 485、缓存不可用 4、撤回 14、原生超时 4、preview_cache_busy 152、preview_failed 35</td><td>历史错误仍存在；152 不代表上线后新发生 152 次容量失败</td></tr><tr><td>视频容量</td><td>配额 25,769,803,776 字节；健康采样已用 25,765,052,491 字节；ECS 空闲 52,424,949,760 字节</td><td>容量准入修复未扩大配额，也未补齐历史原件</td></tr><tr><td>云端图片</td><td>ready 7320；unavailable 236（无效图片 2、撤回 35、表情源无效 31、表情源不可用 168）</td><td>ready 是 preview_or_detail，不是 7320 张原图完整</td></tr><tr><td>云端文档</td><td>ready 606；unavailable 17，均标撤回；03:48 记录只有 3 行原件记录</td><td>混合元数据/文字预览/原件状态，606 不能当原件归档数</td></tr><tr><td>真实文件抽查</td><td>09:36 两条视频 228936、228983 的云端预览存在且哈希一致；03:48 两个文档样本原件大小与哈希一致</td><td>样本通过不等于全量；云端视频抽查是预览，不是视频原件</td></tr><tr><td>时间口径</td><td>09:36:43 健康汇总中 deferred 65、expired 390；09:36:39 云端查询为 66、389</td><td>不同异步采样不能拼成同一瞬间；两者总量均 2876</td></tr></tbody></table>
+<h2 id="remaining">还需要完成什么</h2><ol>
+<li>确认并恢复微信账号运行依赖，保留退出原因证据；严格预检通过后再进行获授权的真实原件闭环验收。</li>
+<li>统一原生执行入口及附件任务台账，补齐每次尝试的派发事实、终态、恢复责任和下一步条件。</li>
+<li>建立独立原件归档及本地/云端大小、哈希、格式校验；源端缺乏可信校验值时明确证明边界。</li>
+<li>分别处理历史补采、永久缺失、撤回和状态残留；中图不能替代原图成功指标，坏视频根因不能归到转写模型。</li>
+<li>持续观察近期延迟、最老积压、容量退避恢复、未知错误比例和真实原件成功率；短时“无新增”不等于长期稳定。</li>
+</ol>
+<h2 id="validation">验证记录与新增证据</h2><p>09:35 发布验收记录：Golden 467/467，2 项本地媒体检查未执行；下载恢复 Node 154、附件恢复 Node 61、生命周期 Node 78、聚焦 Node 31、身份 Python 4、云端 Node 24 均通过，相关 Python 套件见原日志。这些套件存在重叠，不相加当作独立用例总数。真实新增原件闭环因身份不可用未验收；未开展真实 ASR 准确率评测。</p>
+<p>本轮文档复核另跑 Golden 与收敛/恢复/身份离线测试，结果见下方交付验证。测试使用固定样本、临时数据库或模拟接口，不向真实联系人发消息，不重启微信，不改生产业务数据。</p><table><thead><tr><th>证据文件（内部标识，不公开原始文件）</th><th>用途</th></tr></thead><tbody><tr><td>outputs/attachment-check-20261103-0345/summary.json</td><td>03:45 阻塞、磁盘与配额区别、预览和文档抽样</td></tr><tr><td>outputs/attachment-convergence-20261103/acceptance.json</td><td>部署文件一致性、测试、账号依赖及统计边界</td></tr><tr><td>outputs/attachment-convergence-20261103/cloud-verification.json</td><td>09:36 云端分层状态和两条预览哈希</td></tr><tr><td>outputs/attachment-convergence-20261103/local-deployment.json；cloud-deployment-v3.log</td><td>本地与云端最终部署及云端 24 项测试</td></tr><tr><td>outputs/attachment-convergence-20261103/cloud-cleanup.json</td><td>4 个不再使用的旧/中间发布目录清理</td></tr><tr><td>outputs/wechat-session-diagnosis-20261103/evidence.json</td><td>09:40 会话退出诊断及原因未知边界</td></tr><tr><td>outputs/attachment-review-v02-golden-20261103.log；attachment-review-v02-focused-20261103.log</td><td>本轮离线复核结果</td></tr></tbody></table>
+<p id="delivery-validation">本轮离线复核通过：Golden 467/467（2 项本地媒体检查未执行），收敛及恢复 Node 24/24、身份 Python 4/4。未修改业务代码，未开展新的真实微信下载或真实 API 评测。</p>
+</section><hr><h2>原有问题与证据：完整保留，并逐项补充最新状态</h2><h2 id="_2">凌晨 02:19 的上线快照（历史，不能代表 09:40 状态）</h2>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>截至快照时间的结果</th>
+<th>边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>新交接规则</td>
+<td><code>handoff-20261102-v1</code> 已于 11 月 2 日 14:03 上线，当前工作进程报告该版本</td>
+<td>规则上线不代表所有附件已匹配，也不构成业务准确率评测</td>
+</tr>
+<tr>
+<td>补充修复</td>
+<td>11 月 3 日约 02:00 部署异常退出诊断、安全恢复、交接后关闭旧等待记录</td>
+<td>尚未完成统一附件台账和整个原件归档改造</td>
+</tr>
+<tr>
+<td>原生下载保护</td>
+<td>02:19 当时图片、视频均无全局阻塞，并取得新原件；03:45 起账号验证失败，09:36 仍未恢复</td>
+<td>不代表历史失败已全部清零</td>
+</tr>
+<tr>
+<td>数据库与镜像</td>
+<td>本地 PostgreSQL 可连接，ECS 业务镜像状态正常</td>
+<td>本地为业务主写，ECS 为通过 HTTPS 快照同步的 PostgreSQL 副本；未迁移 RDS</td>
+</tr>
+<tr>
+<td>旧等待记录</td>
+<td>11 条已成功交接但遗留的等待记录已关闭</td>
+<td>不重写既有实际任务状态</td>
+</tr>
+<tr>
+<td>修复验收</td>
+<td>Golden 467/467 通过，相关下载、恢复和交接测试通过；Golden 中两项本地媒体检查跳过</td>
+<td>离线回归不等于真实微信下载、真实转写准确率或长期稳定性验证</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">当前附件链路与故障位置</h2>
+<div class="mermaid">flowchart TD
+    A[收到微信消息] --&gt; B[精确定位消息及附件类型]
+    B --&gt; C[读取缓存与原件下载引用]
+    C --&gt; D[调度与原生操作准入]
+    D --&gt; E[微信原生下载请求]
+    E --&gt; F[等待本地文件并校验完整性]
+    F --&gt; G[上传云端原件并核验]
+    G --&gt; H[生成或读取预览]
+    F --&gt; I[提取文稿或视频转写]
+    I --&gt; J[唯一作品匹配]
+    J --&gt; K[角色交接状态机]
+    B -. 类型或引用歧义 .-&gt; X[暂停并记录可诊断原因]
+    C -. 缓存缺失或资源不全 .-&gt; X
+    D -. 排队饥饿或保护未恢复 .-&gt; X
+    E -. 请求失败或完成信号缺失 .-&gt; X
+    F -. 超时或文件损坏 .-&gt; X
+    G -. 大小限制或环境故障 .-&gt; X
+    H -. 缓存竞争或预览失败 .-&gt; X
+</div><details><summary>查看图表源码</summary><pre>flowchart TD
+    A[收到微信消息] --&gt; B[精确定位消息及附件类型]
+    B --&gt; C[读取缓存与原件下载引用]
+    C --&gt; D[调度与原生操作准入]
+    D --&gt; E[微信原生下载请求]
+    E --&gt; F[等待本地文件并校验完整性]
+    F --&gt; G[上传云端原件并核验]
+    G --&gt; H[生成或读取预览]
+    F --&gt; I[提取文稿或视频转写]
+    I --&gt; J[唯一作品匹配]
+    J --&gt; K[角色交接状态机]
+    B -. 类型或引用歧义 .-&gt; X[暂停并记录可诊断原因]
+    C -. 缓存缺失或资源不全 .-&gt; X
+    D -. 排队饥饿或保护未恢复 .-&gt; X
+    E -. 请求失败或完成信号缺失 .-&gt; X
+    F -. 超时或文件损坏 .-&gt; X
+    G -. 大小限制或环境故障 .-&gt; X
+    H -. 缓存竞争或预览失败 .-&gt; X
+</pre></details>
+<p>业务状态与附件状态必须独立。业务规则造成的视频排除不能显示为下载失败（本次不重新核验或调整时长规则）；视频匹配唯一作品后才能推进对应作品的角色交接。微信原生请求已返回，也不能直接标为文件下载成功。</p>
+<h2 id="_4">微信原件获取链路：历史问题及逐项处理状态（并非全部修复）</h2>
+<table>
+<thead>
+<tr>
+<th>编号</th>
+<th>问题及信号</th>
+<th>已确认事实与原因边界</th>
+<th>状态或处理方向</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>图片只有中图，没有原图</td>
+<td>10 月 29 日审计中 406 条图片只有中等尺寸资源，原图大小为零且无原图地址；旧逻辑只接受原图</td>
+<td><strong>09:40 状态：未闭环：没有中图原生路线已完整实施的验收证据。</strong><br>原图、中图和缩略图应分级保存。该审计没有验证中图原生下载路线已实施</td>
+</tr>
+<tr>
+<td>2</td>
+<td>图片下载参数缺失</td>
+<td>出现 <code>invalid_image_size_or_server_id</code>、<code>original_reference_missing</code>、<code>middle_reference_missing</code>；可见消息不保证缓存里有全部原件参数</td>
+<td><strong>09:40 状态：未闭环：参数缺失仍需逐条定位。</strong><br>记录具体缺失字段，不能统一记为网络失败</td>
+</tr>
+<tr>
+<td>3</td>
+<td>缓存或下载引用准备失败</td>
+<td><code>message_cache_unavailable</code>、<code>image_reference_prepare_failed</code>；无法取得精确消息的下载引用</td>
+<td><strong>09:40 状态：未闭环：缓存与引用缺失仍属独立故障。</strong><br>发生在下载前；区分历史缓存不可用、可重试读取失败和扫描覆盖缺口</td>
+</tr>
+<tr>
+<td>4</td>
+<td>原件引用有歧义</td>
+<td><code>ambiguous_image_reference</code>、<code>ambiguous_video_reference</code>，存在多个候选</td>
+<td><strong>09:40 状态：保护保留：有歧义不应任选文件；并非已修复结论。</strong><br>停止以防取错文件是正确保护，应加强精确定位而非任选候选</td>
+</tr>
+<tr>
+<td>5</td>
+<td>附件类型与处理路径不一致</td>
+<td>MP4、PNG 也会以普通文件消息发送，若只看展示名或扩展名，会落入错误解析或限制路径</td>
+<td><strong>09:40 状态：部分已处理：已覆盖相关文件路径，不宣称所有类型全量验收。</strong><br>结合消息类型和文件内容判断；视频文件和视频消息均需覆盖</td>
+</tr>
+<tr>
+<td>6</td>
+<td>任务格式被拒绝</td>
+<td><code>image_job_format_rejected</code></td>
+<td><strong>09:40 状态：原因未查清：旧协议错误缺少具体字段。</strong><br>属于适配器任务协议或参数校验问题；旧错误码不足以进一步定位具体字段</td>
+</tr>
+<tr>
+<td>7</td>
+<td>账号与本地适配环境异常</td>
+<td>出现 <code>account_verification_failed</code>；历史检查还记录绑定、版本检查失败及安全软件隔离组件</td>
+<td><strong>09:40 状态：当前阻塞：09:36 账号身份仍不可用；诊断已增强。</strong><br>属于本地微信依赖环境；与 ECS 容量故障分开处理</td>
+</tr>
+<tr>
+<td>8</td>
+<td>原生请求失败</td>
+<td><code>native_image_request_failed</code>、<code>native_video_request_failed</code></td>
+<td><strong>09:40 状态：部分改进：结构化诊断增强，不代表原生失败已消失。</strong><br>失败结果明确，部分旧回执未保留底层原因；需要完整结构化诊断</td>
+</tr>
+<tr>
+<td>9</td>
+<td>请求提交后超时</td>
+<td>原生请求已经返回，但 15 分钟内没有校验通过的文件；历史重试未保留下载完成回调和 CDN 错误</td>
+<td><strong>09:40 状态：未闭环：有超时历史，缺少完整底层完成证据。</strong><br>超时只是结果。不能由此断定微信风控、网络故障、资源地址过期或组件卸载</td>
+</tr>
+<tr>
+<td>10</td>
+<td>MP4 存在但无有效封装</td>
+<td>4 个实际视频检测报 <code>moov atom not found</code></td>
+<td><strong>09:40 状态：未闭环：4 个坏视频的源头原因未确定。</strong><br>文件损坏、不完整或未正确封装；现有证据无法区分源文件问题和获取过程损坏，不能归因于转写模型</td>
+</tr>
+<tr>
+<td>11</td>
+<td>图片或表情无法解码</td>
+<td><code>invalid_image</code>、<code>image_format_unavailable</code>、表情源不可用或无效</td>
+<td><strong>09:40 状态：部分恢复：可解码或缩略图成功不等于原图完整。</strong><br>区分坏文件、资源缺失和解码能力。历史 5 条图片已可生成缩略图却仍显示旧失败，不能据此宣称原图完整</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_5">自身调度与恢复设计出现过的问题</h2>
+<table>
+<thead>
+<tr>
+<th>编号</th>
+<th>问题</th>
+<th>原因与影响</th>
+<th>已修复项或剩余工作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12</td>
+<td>一张图片异常连带阻塞视频</td>
+<td>最终操作同一微信进程，无法证明安全退出时会触发共享保护</td>
+<td><strong>09:40 状态：部分已修：单任务故障隔离已做；账号依赖或进程风险仍会暂停共享通道。</strong><br>保护不能简单删除；应区分单任务失败与进程级不确定风险，并提供安全恢复证明</td>
+</tr>
+<tr>
+<td>13</td>
+<td>配置替换失败漏记终态</td>
+<td>暂停配置临时文件生成后，正式配置替换失败；程序处于已完成预检但尚未写入暂停配置的分支空档</td>
+<td><strong>09:40 状态：已修复并部署：异常分支、阶段诊断、有限重试与安全终态。</strong><br>本次补齐阶段诊断、有限重试、未派发且配置未变时的安全终态；实际旧阻塞经审计解除</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Windows 文件替换竞争</td>
+<td>状态文件曾出现 <code>EPERM</code>、<code>EBUSY</code>、<code>EACCES</code>，不同脚本存在不同写入路径</td>
+<td><strong>09:40 状态：部分已修：已覆盖相关 JSON 和 PowerShell 路径，非所有写入路径普遍保证。</strong><br>部分 JSON 路径此前已修；本次补充 PowerShell 配置路径。修复一个路径不代表全部文件写入都已覆盖</td>
+</tr>
+<tr>
+<td>15</td>
+<td>等待发送任务退出超时</td>
+<td>图片与视频均出现 <code>sender_drain_timeout</code>，未在规定时间内获得安全执行条件</td>
+<td><strong>09:40 状态：分类已明确：准入等待失败仍可能发生，不能标为下载失败。</strong><br>明确为准入等待失败，不能伪装成微信原件下载失败</td>
+</tr>
+<tr>
+<td>16</td>
+<td>视频排队饥饿</td>
+<td>冷却期延期曾错误消耗调度轮次，导致视频长时间排不到</td>
+<td><strong>09:40 状态：已修复相关调度：仍需持续观察最老积压与延迟。</strong><br>已修相关公平调度；仍需用最老积压时间和分类延迟持续验收</td>
+</tr>
+<tr>
+<td>17</td>
+<td>文件迟到但失败记录未关闭</td>
+<td>下载后续完成或文件后来可读，旧失败缓存仍保留；此前迟到文件复查不足</td>
+<td><strong>09:40 状态：机制已修：迟到文件复查已有；历史状态未证明全量一致。</strong><br>已增加迟到文件复查，仍应持续核验原件并与状态对账</td>
+</tr>
+<tr>
+<td>18</td>
+<td>旧请求无人收尾</td>
+<td>达到重试上限或离开自动扫描范围后，部分旧任务长期停在 requested 或等待</td>
+<td><strong>09:40 状态：部分已修：安全恢复与退避加强；全量任务台账和终态治理未完成。</strong><br>明确终态、下一次复查条件、人工补采入口；避免永久等待</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">最近异常退出的具体根因</h3>
+<p>11 月 2 日 18:41:41，图片下载包装脚本在约 1.1 秒后以退出码 1 结束。现场有新生成的暂停配置临时文件，正式发送配置仍与备份一致，回执停在 prepared，且没有原生下载派发标记。这把故障定位在“替换正式配置”阶段，而非微信已经开始下载后的失败。</p>
+<p>代码先设置预检完成，成功替换配置后才设置暂停已写入。替换失败落在两个标记之间，原有异常处理没有为这一分支生成可安全恢复的终态。同时历史日志过滤丢失了实际异常，只剩退出码。因此，可以确认失败阶段和异常处理缺口，不能确认当时 Windows 的具体报错一定是文件占用。</p>
+<p>修复后按 preflight、pause_write、pause_replace、drain、dispatch 记录阶段；替换前校验当前配置仍与备份一致，最多重试 5 次，间隔 100 毫秒。诊断保存异常类型、HRESULT、代码位置、任务身份及是否已派发等字段，不保存配置内容和凭据。仅在未派发、配置未改变且清理安全时允许自动恢复；存在派发可能或配置变化时仍保留保护。</p>
+<h3 id="_7">交接后旧等待记录的独立问题</h3>
+<p>未匹配到作品时，系统写入没有 task_id 的等待事件；后来匹配成功，会生成带 task_id 的交接事件。旧实现没有同步关闭前一条等待记录，因此已经推进的任务仍被显示为等待。修复对已完成交接进行幂等检查并关闭对应旧等待，实际关闭 11 条；这属于事件生命周期问题，不是微信下载错误。</p>
+<h2 id="_8">云端与运行环境出现过的问题</h2>
+<table>
+<thead>
+<tr>
+<th>编号</th>
+<th>问题</th>
+<th>已确认事实</th>
+<th>状态与边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>19</td>
+<td>ECS 磁盘满</td>
+<td>PostgreSQL 写入 <code>postmaster.pid</code> 报 <code>No space left on device</code></td>
+<td><strong>09:40 状态：历史故障已恢复：今天容量问题是预览配额，非磁盘再次耗尽。</strong><br>已清理并恢复；是明确的环境故障</td>
+</tr>
+<tr>
+<td>20</td>
+<td>空间释放后服务仍失败</td>
+<td>空间恢复时 PostgreSQL 仍处于失败状态</td>
+<td><strong>09:40 状态：历史服务已恢复：不能替代每次故障后的链路健康验收。</strong><br>已恢复服务；需要从磁盘恢复一直验收到数据库和同步服务恢复</td>
+</tr>
+<tr>
+<td>21</td>
+<td>本地主库停止</td>
+<td>本地 PostgreSQL 也曾不可用，进程消失的完整原因未留存</td>
+<td><strong>09:40 状态：历史实例已恢复：进程消失完整根因未确定。</strong><br>已恢复；不能直接归因于 ECS 磁盘满，因为是不同实例</td>
+</tr>
+<tr>
+<td>22</td>
+<td>附件大小限制不统一</td>
+<td>早期路径有 20 MiB 限制；普通附件路径后来以 400 MiB 阈值拦下两个约 556 和 561 MiB 的 MP4，本地原件存在</td>
+<td><strong>09:40 状态：已修相关路径至 1 GiB：不等于所有附件已成功上传。</strong><br>相关路径已提高到 1 GiB；历史问题是路径限制而非微信没有下载</td>
+</tr>
+<tr>
+<td>23</td>
+<td>云端预览竞争或生成失败</td>
+<td>出现 <code>preview_cache_busy</code> 和 <code>preview_failed</code>；部分历史异常缺少详细诊断</td>
+<td><strong>09:40 状态：部分已修：今天修容量拒收与排队；其他预览失败未全量清零。</strong><br>预览和原件上传独立验收，不由一个预览错误推断所有原件缺失</td>
+</tr>
+<tr>
+<td>24</td>
+<td>预览缓存淘汰</td>
+<td><code>preview_evicted</code></td>
+<td><strong>09:40 状态：正常淘汰机制：原件独立归档仍未完成。</strong><br>淘汰缓存可以正常；若没有独立原件归档，就会造成后续无法读取</td>
+</tr>
+<tr>
+<td>25</td>
+<td>文档预览存在但原件未归档</td>
+<td>部分文档采用自动提取文字、原件按需获取，存在 previewReady 为真、originalReady 为假的情况</td>
+<td><strong>09:40 状态：未完成：预览或文字成功不证明文档原件归档。</strong><br>尚需统一所有原件保存策略，不能把文字提取成功当成原件上传完成</td>
+</tr>
+<tr>
+<td>26</td>
+<td>历史消息不在采集范围</td>
+<td>10 月 29 日审计中 488 条云端缺视频记录在自动原生下载时间范围之外</td>
+<td><strong>09:40 状态：未完成历史补采：今天限制旧任务抢占近期队列，不等于补齐旧文件。</strong><br>属于历史覆盖缺口，不是当天新增失败；应建立独立补采计划</td>
+</tr>
+<tr>
+<td>27</td>
+<td>验收把多种成功混在一起</td>
+<td>元数据同步 HTTP 200、预览可用、本地文件存在，都不能单独证明云端原件完整</td>
+<td><strong>09:40 状态：部分已修：新增分层健康汇总；统一原件台账和全量哈希验收未完成。</strong><br>应以实际对象、大小和哈希核验原件，界面展示各阶段真实状态</td>
+</tr>
+</tbody>
+</table>
+<p>撤回消息明确排除，不进入补下载和故障重试。历史上 17 条撤回文档被折叠成 document_read_failed，24 条撤回图片仍留在失败或等待状态；这是错误分类和收尾问题，不是需要找回的附件。上述数量是历史审计结果，不是当前未处理数量。</p>
+<h2 id="_9">技术栈与环境责任判断</h2>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>判断</th>
+<th>改变后的作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node 与 Python</td>
+<td>没有证据表明语言本身导致这批反复故障；问题集中在跨进程协议、文件替换、状态收尾与错误处理</td>
+<td>换语言不能自动补齐任务生命周期和文件校验</td>
+</tr>
+<tr>
+<td>微信桌面原生获取</td>
+<td>依赖账号、进程状态、缓存引用与原生请求，完成回调及错误可观测性不足</td>
+<td>应减少并发控制入口、保留完成证据，并提供失败后的受控补采方式</td>
+</tr>
+<tr>
+<td>Windows 本地运行</td>
+<td>发生过文件替换冲突、账号校验和组件环境问题</td>
+<td>统一执行器、配置写入和服务管理比不断增加零散重试更重要</td>
+</tr>
+<tr>
+<td>ECS 与 PostgreSQL</td>
+<td>真实发生磁盘满、数据库故障和恢复不完整</td>
+<td>容量治理、健康检查与服务恢复直接有效；RDS 只能改善其中数据库部分</td>
+</tr>
+<tr>
+<td>附件架构</td>
+<td>元数据、预览和原件混用成功标志，缓存与归档边界不清</td>
+<td>统一附件台账和完整原件验收，是跨类型解决问题的核心</td>
+</tr>
+</tbody>
+</table>
+<p>业务和数据库迁移继续暂缓。本次复盘不代表已经迁移 RDS、改用对象存储或实施下列架构建议。</p>
+<h2 id="_10">后续改进与验收标准</h2>
+<div class="mermaid">flowchart LR
+    A[统一附件台账] --&gt; B[精确消息与资源身份]
+    B --&gt; C[单一原生执行器]
+    C --&gt; D[本地原件校验]
+    D --&gt; E[云端原件校验]
+    E --&gt; F[独立预览缓存]
+    C --&gt; G[完整任务终态与安全恢复]
+    G --&gt; A
+    D --&gt; H[定期对账]
+    E --&gt; H
+    H --&gt; A
+</div><details><summary>查看图表源码</summary><pre>flowchart LR
+    A[统一附件台账] --&gt; B[精确消息与资源身份]
+    B --&gt; C[单一原生执行器]
+    C --&gt; D[本地原件校验]
+    D --&gt; E[云端原件校验]
+    E --&gt; F[独立预览缓存]
+    C --&gt; G[完整任务终态与安全恢复]
+    G --&gt; A
+    D --&gt; H[定期对账]
+    E --&gt; H
+    H --&gt; A
+</pre></details>
+<table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>建议改进</th>
+<th>可验收结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第一</td>
+<td>统一附件台账，分别记录发现、请求、原件下载、原件上传、预览状态</td>
+<td>每条附件可定位当前阶段、证据、错误类型、下一次处理时间；不再用一个 ready 代替所有阶段</td>
+</tr>
+<tr>
+<td>第一</td>
+<td>单一进程管理微信原生操作，其他模块经队列提交；减少共享配置的多方改写</td>
+<td>单任务失败不无故拖住全部任务；进程级风险仍会保护；并发和异常退出可离线复现</td>
+</tr>
+<tr>
+<td>第一</td>
+<td>每次尝试保留开始、阶段、派发事实、终态、退出原因和校验结果</td>
+<td>不再只剩 exit 1 或 timeout；凭据与私人消息不进入诊断</td>
+</tr>
+<tr>
+<td>第二</td>
+<td>原件独立持久化，预览可清理；按消息身份、大小及哈希核验本地与云端</td>
+<td>预览淘汰不影响原件；能准确列出本地完整但云端缺失、元数据存在但原件缺失的附件</td>
+</tr>
+<tr>
+<td>第二</td>
+<td>新消息优先，历史补采限速；按原因重试，迟到原件自动对账</td>
+<td>新业务不会被旧重试占满；永久不可用、撤回、暂时失败有不同终态</td>
+</tr>
+<tr>
+<td>第二</td>
+<td>容量阈值告警、日志治理、数据库与服务恢复检查</td>
+<td>故障后同时验证空间、服务、数据库查询和同步链路；避免只清理磁盘就宣布恢复</td>
+</tr>
+<tr>
+<td>第三</td>
+<td>真实附件闭环抽检与持续运行验收</td>
+<td>分类型统计完整原件成功率、下载上传延迟、最老积压、未知原因比例和恢复时长；按唯一附件去重而非按重试次数统计</td>
+</tr>
+</tbody>
+</table>
+<p>原件归档至少核对字节数和哈希；视频另做容器可解析检查，图片另做解码检查。源端没有可信校验值时，应明确“本地与云端一致”不等于“已证明与发送端原件一致”。中图和缩略图的可用性不能提高原图成功率。</p>
+<p>验证包括离线故障注入、临时数据库回归，以及获授权后的真实附件读取核验；不得为测试向真实联系人发消息或重启微信。通知按事件变化去重，正常监视不向聊天持续发送心跳。</p>
+<p>ECS 清理只针对已确认不再使用的旧发布版本和可清理缓存；业务附件、数据库、共享资源、数据备份和 frozen 测试样本不属于旧版本，不能连带删除。</p>
+<h2 id="_11">证据索引与统计口径</h2>
+<p>以下为本地审计文件标识，仅用于内部复核；原始私有日志、聊天内容、配置和部署凭据未随本文发布。</p>
+<table>
+<thead>
+<tr>
+<th>本地审计位置</th>
+<th>支持的结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>outputs/download-failure-audit-20261029/summary.json</code></td>
+<td>图片资源规格、撤回误分类、旧回执、历史视频范围、原生完成信息缺失</td>
+</tr>
+<tr>
+<td><code>outputs/download-audit-20261030/attachment-local-summary.json</code></td>
+<td>普通文件附件本地核验、两个大 MP4 的 400 MiB 限制</td>
+</tr>
+<tr>
+<td><code>outputs/download-audit-20261030/cloud-local-comparison.json</code></td>
+<td>历史扫描范围及本地云端比较，不能外推到后续全部附件</td>
+</tr>
+<tr>
+<td><code>outputs/attachment-limit-1g-20261030/public-verification.json</code></td>
+<td>1 GiB 路径发布验证，不代表全量原件上传成功</td>
+</tr>
+<tr>
+<td><code>outputs/runtime-audit-20261102/recheck.private.json</code></td>
+<td>ECS 磁盘和数据库故障、预览与原件状态差异；该原始文件不公开</td>
+</tr>
+<tr>
+<td><code>outputs/native-handoff-fix-20261103/acceptance.json</code></td>
+<td>本次异常退出和旧等待修复验收</td>
+</tr>
+<tr>
+<td><code>outputs/native-handoff-fix-20261103/deployed-golden.log</code></td>
+<td>已部署版本 Golden 回归结果及跳过项</td>
+</tr>
+<tr>
+<td><code>docs/video-state-pilot.md</code></td>
+<td>调度、原生下载恢复与业务规则实现说明</td>
+</tr>
+</tbody>
+</table>
+<p>失败回执可能包含同一附件多次重试，不能把回执数量当作失败附件数。历史故障、当前积压、正常排队、撤回和业务排除分别统计。本复盘列出已有证据能识别的故障类别；对未保存底层异常的历史请求，不补造原因。</p></main><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true,securityLevel:'strict',theme:'neutral'});</script></body></html>
